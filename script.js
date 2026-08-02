@@ -95,16 +95,22 @@ const nextBtn = document.getElementById("nextDay");
 const titleEl = document.getElementById("dayTitle");
 const dateEl = document.getElementById("dayDate");
 const clearBtn = document.getElementById("clearBtn");
+const dayNotesField = document.getElementById("dayNotes");
 const completedTodayHead = document.getElementById("completedTodayHead");
 const completedTodayList = document.getElementById("completedTodayList");
 const completedList = document.getElementById("completedList");
 
 // --- Day model ---------------------------------------------------------------
+function newId() {
+  return "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
 function blankRow() {
   return { task: "", notes: "" };
 }
 function cleanRow(r) {
-  return { task: (r && r.task) || "", notes: (r && r.notes) || "" };
+  const out = { task: (r && r.task) || "", notes: (r && r.notes) || "" };
+  if (r && r.id) out.id = r.id; // stable id lets reorders follow a task across days
+  return out;
 }
 function nonBlank(r) {
   return r.task.trim() || r.notes.trim();
@@ -118,13 +124,15 @@ function padActive(list) {
 // Accepts the current shape, or migrates the old {rows:[{task,notes,done}]} /
 // bare-array formats. Returns { active:[15], completed:[] }.
 function normalizeDay(obj) {
-  if (!obj) return { active: padActive([]), completed: [] };
+  const notes = (o) => (o && typeof o.dayNotes === "string" ? o.dayNotes : "");
+  if (!obj) return { active: padActive([]), completed: [], dayNotes: "" };
 
   // Legacy: bare array of rows with a `done` flag.
   if (Array.isArray(obj)) {
     return {
       active: padActive(obj.filter((r) => !r.done)),
       completed: obj.filter((r) => r.done).map(cleanRow),
+      dayNotes: "",
     };
   }
   // Legacy: { rows: [...] } (with or without done flags).
@@ -132,12 +140,14 @@ function normalizeDay(obj) {
     return {
       active: padActive(obj.rows.filter((r) => !r.done)),
       completed: obj.rows.filter((r) => r.done).map(cleanRow),
+      dayNotes: notes(obj),
     };
   }
   // Current shape.
   return {
     active: padActive(Array.isArray(obj.active) ? obj.active : []),
     completed: (Array.isArray(obj.completed) ? obj.completed : []).map(cleanRow),
+    dayNotes: notes(obj),
   };
 }
 
@@ -184,17 +194,37 @@ function autoGrow(el) {
   el.style.height = el.scrollHeight + "px";
 }
 
+// A task keeps a stable id once it has content, so a reorder can follow it
+// across days.
+function ensureId(i) {
+  if (nonBlank(day.active[i]) && !day.active[i].id) day.active[i].id = newId();
+}
+
 // --- Render the active grid --------------------------------------------------
+let dragIndex = null;
+
 function render() {
   body.innerHTML = "";
 
   day.active.forEach((row, i) => {
     const tr = document.createElement("tr");
+    tr.dataset.index = i;
+
+    // Drag handle (only cell that starts a drag, so typing isn't disrupted).
+    const gripTd = document.createElement("td");
+    gripTd.className = "grip-cell";
+    const grip = document.createElement("span");
+    grip.className = "grip";
+    grip.textContent = "⠿";
+    grip.title = "Drag to reorder";
+    grip.addEventListener("mousedown", () => (tr.draggable = true));
+    gripTd.appendChild(grip);
 
     const taskTd = document.createElement("td");
     taskTd.appendChild(
       makeTextCell(row.task, `${i + 1}.`, (v) => {
         day.active[i].task = v;
+        ensureId(i);
         saveDay();
       })
     );
@@ -203,6 +233,7 @@ function render() {
     notesTd.appendChild(
       makeTextCell(row.notes, "", (v) => {
         day.active[i].notes = v;
+        ensureId(i);
         saveDay();
       })
     );
@@ -215,6 +246,36 @@ function render() {
     box.addEventListener("change", () => completeRow(i));
     doneTd.appendChild(box);
 
+    // Drag-and-drop reordering.
+    tr.addEventListener("dragstart", (e) => {
+      dragIndex = i;
+      tr.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      try {
+        e.dataTransfer.setData("text/plain", String(i));
+      } catch (_) {}
+    });
+    tr.addEventListener("dragend", () => {
+      tr.draggable = false;
+      tr.classList.remove("dragging");
+      body.querySelectorAll(".drop-target").forEach((x) =>
+        x.classList.remove("drop-target")
+      );
+      dragIndex = null;
+    });
+    tr.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      tr.classList.add("drop-target");
+    });
+    tr.addEventListener("dragleave", () => tr.classList.remove("drop-target"));
+    tr.addEventListener("drop", (e) => {
+      e.preventDefault();
+      tr.classList.remove("drop-target");
+      if (dragIndex !== null && dragIndex !== i) reorderActive(dragIndex, i);
+    });
+
+    tr.appendChild(gripTd);
     tr.appendChild(taskTd);
     tr.appendChild(notesTd);
     tr.appendChild(doneTd);
@@ -222,6 +283,49 @@ function render() {
   });
 
   document.querySelectorAll(".cell").forEach(autoGrow);
+}
+
+// Move a row, compact tasks to the top, then propagate the new order forward.
+function reorderActive(from, to) {
+  const arr = day.active.slice();
+  const [moved] = arr.splice(from, 1);
+  arr.splice(to, 0, moved);
+  const nb = arr.filter(nonBlank);
+  nb.forEach((r) => {
+    if (!r.id) r.id = newId();
+  });
+  day.active = padActive(nb);
+  saveDay();
+  render();
+  propagateOrder(viewDate);
+}
+
+// Apply this day's task order (by id) to every later working day that has data.
+function propagateOrder(fromDate) {
+  const orderIds = day.active.filter(nonBlank).map((r) => r.id).filter(Boolean);
+  if (!orderIds.length) return;
+  let d = nextWorkday(fromDate);
+  while (keyOf(d) <= keyOf(maxDate)) {
+    const raw = localStorage.getItem(draftKeyOf(d));
+    if (raw) {
+      const obj = normalizeDay(JSON.parse(raw));
+      obj.active = reorderByIds(obj.active, orderIds);
+      localStorage.setItem(draftKeyOf(d), JSON.stringify(obj));
+    }
+    d = nextWorkday(d);
+  }
+}
+
+// Reorder `active` so ids follow `orderIds`; tasks not in the list trail after,
+// keeping their existing relative order.
+function reorderByIds(active, orderIds) {
+  const rest = active.filter(nonBlank);
+  const inOrder = [];
+  orderIds.forEach((id) => {
+    const idx = rest.findIndex((r) => r.id === id);
+    if (idx !== -1) inOrder.push(rest.splice(idx, 1)[0]);
+  });
+  return padActive(inOrder.concat(rest));
 }
 
 function makeTextCell(value, placeholder, onInput) {
@@ -383,16 +487,24 @@ clearBtn.addEventListener("click", () => {
   render();
 });
 
+// --- Day notes (free text; per-day, never carried over) ----------------------
+dayNotesField.addEventListener("input", () => {
+  day.dayNotes = dayNotesField.value;
+  saveDay();
+});
+
 // --- Carry-over --------------------------------------------------------------
-async function carryOverActive() {
-  let d = prevWorkday(today);
+// Walk back from `refDate` (exclusive) to the first day that has unfinished
+// tasks, and return them. Used to seed today and any un-started future day.
+async function carryOverActive(refDate) {
+  let d = prevWorkday(refDate);
   const stopKey = keyOf(minDate);
   while (keyOf(d) >= stopKey) {
     const draft = JSON.parse(localStorage.getItem(draftKeyOf(d)) || "null");
     if (draft) return normalizeDay(draft).active.filter(nonBlank);
     d = prevWorkday(d);
   }
-  const prevCommitted = await getCommitted(prevWorkday(today));
+  const prevCommitted = await getCommitted(prevWorkday(refDate));
   return prevCommitted ? normalizeDay(prevCommitted).active.filter(nonBlank) : [];
 }
 
@@ -404,14 +516,20 @@ async function loadDay(date) {
   const started = localStorage.getItem(draftKeyOf(viewDate)) !== null;
   day = await getDay(viewDate);
 
-  // Carry-over: current working day only, and only if never started.
-  if (keyOf(viewDate) === keyOf(today) && !started && !day.active.some(nonBlank)) {
-    const carried = await carryOverActive();
+  // Carry-over: today and any future working day, only if never started and
+  // still empty. Unfinished tasks roll forward until they're completed. We
+  // persist the seed for today; future days are seeded for display only, so
+  // they always reflect the latest unfinished tasks until you edit them.
+  const isTodayOrFuture = keyOf(viewDate) >= keyOf(today);
+  if (isTodayOrFuture && !started && !day.active.some(nonBlank)) {
+    const carried = await carryOverActive(viewDate);
     if (carried.length) {
       day.active = padActive(carried);
-      saveDay();
+      if (keyOf(viewDate) === keyOf(today)) saveDay();
     }
   }
+
+  dayNotesField.value = day.dayNotes || "";
 
   render();
   renderCompletedToday();
@@ -449,6 +567,50 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight" && !nextBtn.disabled) loadDay(nextWorkday(viewDate));
 });
 
+// --- Future tasks (a standalone 10-row backlog, not tied to any day) ---------
+const FUTURE_ROWS = 10;
+const FUTURE_KEY = "plan-future";
+const futureBody = document.getElementById("futureBody");
+
+function loadFuture() {
+  const arr = JSON.parse(localStorage.getItem(FUTURE_KEY) || "[]");
+  const out = (Array.isArray(arr) ? arr : []).slice(0, FUTURE_ROWS).map(cleanRow);
+  while (out.length < FUTURE_ROWS) out.push(blankRow());
+  return out;
+}
+
+function renderFuture() {
+  const future = loadFuture();
+  futureBody.innerHTML = "";
+
+  future.forEach((row, i) => {
+    const tr = document.createElement("tr");
+
+    const taskTd = document.createElement("td");
+    taskTd.appendChild(
+      makeTextCell(row.task, `${i + 1}.`, (v) => {
+        future[i].task = v;
+        localStorage.setItem(FUTURE_KEY, JSON.stringify(future));
+      })
+    );
+
+    const notesTd = document.createElement("td");
+    notesTd.appendChild(
+      makeTextCell(row.notes, "", (v) => {
+        future[i].notes = v;
+        localStorage.setItem(FUTURE_KEY, JSON.stringify(future));
+      })
+    );
+
+    tr.appendChild(taskTd);
+    tr.appendChild(notesTd);
+    futureBody.appendChild(tr);
+  });
+
+  futureBody.querySelectorAll(".cell").forEach(autoGrow);
+}
+
 // --- Boot --------------------------------------------------------------------
 purgeOldDrafts();
 loadDay(today);
+renderFuture();
