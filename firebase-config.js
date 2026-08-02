@@ -17,12 +17,13 @@
 
 // Paste your Firebase web-app config object here (replace every "PASTE_ME").
 const FIREBASE_CONFIG = {
-  apiKey: "PASTE_ME",
-  authDomain: "PASTE_ME",
-  projectId: "PASTE_ME",
-  storageBucket: "PASTE_ME",
-  messagingSenderId: "PASTE_ME",
-  appId: "PASTE_ME",
+  apiKey: "AIzaSyDbnEAyFvRzjvYVRL_gNxgvf0fv1IdAJGk",
+  authDomain: "planning-tool-67353.firebaseapp.com",
+  projectId: "planning-tool-67353",
+  storageBucket: "planning-tool-67353.firebasestorage.app",
+  messagingSenderId: "140995273169",
+  appId: "1:140995273169:web:64ac4b58cacd52e49540f0",
+  measurementId: "G-3ZW2RTE3ZR",
 };
 
 // The ONLY account allowed to edit. Everyone else (your boss) can view only.
