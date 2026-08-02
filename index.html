@@ -4,22 +4,38 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Planner</title>
-  <link rel="stylesheet" href="styles.css?v=1">
+  <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
   <main class="wrap">
     <header class="head">
-      <h1 id="dayTitle">Today</h1>
-      <p id="dayDate" class="subtitle"></p>
+      <button id="prevDay" class="navbtn" aria-label="Previous day" title="Previous day">&#9664;</button>
+      <div class="daylabel">
+        <h1 id="dayTitle">Today</h1>
+        <p id="dayDate" class="subtitle"></p>
+      </div>
+      <button id="nextDay" class="navbtn" aria-label="Next day" title="Next day">&#9654;</button>
     </header>
 
-    <table class="plan-table" aria-label="Today's plan">
+    <table class="plan-table" aria-label="Daily plan">
+      <thead>
+        <tr>
+          <th class="col-task">Task</th>
+          <th class="col-notes">Notes</th>
+          <th class="col-done">Complete?</th>
+        </tr>
+      </thead>
       <tbody id="planBody">
         <!-- 15 rows injected by script.js -->
       </tbody>
     </table>
+
+    <section class="completed">
+      <h2 class="completed-head">Completed &middot; past 7 days</h2>
+      <ul id="completedList" class="completed-list"></ul>
+    </section>
   </main>
 
-  <script src="script.js?v=1"></script>
+  <script src="script.js?v=5"></script>
 </body>
 </html>
