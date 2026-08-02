@@ -4,13 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Planner</title>
-  <link rel="stylesheet" href="styles.css?v=8">
+  <link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body data-palette="#3a6ea5">
   <main class="wrap">
     <div class="topbar">
       <span class="brand">Daily Planner</span>
-      <a class="pill-link" href="stats.html">Stats &rarr;</a>
+      <span class="topbar-right">
+        <span id="authBox" class="authbox" hidden></span>
+        <a class="pill-link" href="stats.html">Stats &rarr;</a>
+      </span>
+    </div>
+
+    <div id="readonlyBanner" class="readonly-banner" hidden>
+      You're viewing this planner in read-only mode.
     </div>
 
     <header class="head">
@@ -72,6 +79,12 @@
     </section>
   </main>
 
-  <script src="script.js?v=8"></script>
+  <!-- Firebase (shared saving). Loaded before the app; see SETUP.md. -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js?v=9"></script>
+  <script src="store.js?v=9"></script>
+  <script src="script.js?v=9"></script>
 </body>
 </html>

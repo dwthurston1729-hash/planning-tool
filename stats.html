@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stats — Daily Planner</title>
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body data-palette="#3a6ea5">
   <main class="wrap">
@@ -33,6 +33,12 @@
     </details>
   </main>
 
-  <script src="stats.js?v=1"></script>
+  <!-- Firebase (shared saving). Loaded before the chart; see SETUP.md. -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js?v=9"></script>
+  <script src="store.js?v=9"></script>
+  <script src="stats.js?v=2"></script>
 </body>
 </html>

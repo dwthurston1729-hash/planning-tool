@@ -99,6 +99,28 @@ const dayNotesField = document.getElementById("dayNotes");
 const completedTodayHead = document.getElementById("completedTodayHead");
 const completedTodayList = document.getElementById("completedTodayList");
 const completedList = document.getElementById("completedList");
+const authBox = document.getElementById("authBox");
+const readonlyBanner = document.getElementById("readonlyBanner");
+
+// Shared cloud store (defined in store.js). Fallback keeps the app working if
+// opened as a bare file:// with no Firebase scripts.
+const plannerStore = window.plannerStore || {
+  configured: false,
+  canEdit: () => true,
+  init: async () => {},
+  subscribe: () => {},
+  writeDay: () => {},
+  writeFuture: () => {},
+  writeStats: () => {},
+  onAuthChange: () => {},
+  signIn: () => {},
+  signOut: () => {},
+  user: () => null,
+};
+
+// Whether the current visitor may edit. False = read-only viewer (e.g. your
+// boss). Recomputed from sign-in state at boot and on every auth change.
+let CAN_EDIT = true;
 
 // --- Day model ---------------------------------------------------------------
 function newId() {
@@ -166,6 +188,8 @@ function setStat(dayKey, count) {
 function saveDay() {
   localStorage.setItem(draftKeyOf(viewDate), JSON.stringify(day));
   setStat(keyOf(viewDate), day.completed.length);
+  plannerStore.writeDay(keyOf(viewDate), day);
+  plannerStore.writeStats(loadStats());
 }
 
 // --- Committed-file cache ----------------------------------------------------
@@ -217,7 +241,11 @@ function render() {
     grip.className = "grip";
     grip.textContent = "⠿";
     grip.title = "Drag to reorder";
-    grip.addEventListener("mousedown", () => (tr.draggable = true));
+    if (CAN_EDIT) {
+      grip.addEventListener("mousedown", () => (tr.draggable = true));
+    } else {
+      grip.style.visibility = "hidden";
+    }
     gripTd.appendChild(grip);
 
     const taskTd = document.createElement("td");
@@ -243,6 +271,7 @@ function render() {
     const box = document.createElement("input");
     box.type = "checkbox";
     box.setAttribute("aria-label", `Mark row ${i + 1} complete`);
+    box.disabled = !CAN_EDIT;
     box.addEventListener("change", () => completeRow(i));
     doneTd.appendChild(box);
 
@@ -311,6 +340,7 @@ function propagateOrder(fromDate) {
       const obj = normalizeDay(JSON.parse(raw));
       obj.active = reorderByIds(obj.active, orderIds);
       localStorage.setItem(draftKeyOf(d), JSON.stringify(obj));
+      plannerStore.writeDay(keyOf(d), obj);
     }
     d = nextWorkday(d);
   }
@@ -334,6 +364,7 @@ function makeTextCell(value, placeholder, onInput) {
   ta.rows = 1;
   ta.value = value;
   ta.placeholder = placeholder;
+  ta.readOnly = !CAN_EDIT;
   ta.addEventListener("input", () => {
     autoGrow(ta);
     onInput(ta.value);
@@ -398,6 +429,7 @@ function renderCompletedToday() {
     box.type = "checkbox";
     box.checked = true;
     box.className = "ci-box";
+    box.disabled = !CAN_EDIT;
     box.setAttribute("aria-label", "Mark as not complete");
     box.addEventListener("change", () => {
       restoreToActive(day, i);
@@ -591,6 +623,7 @@ function renderFuture() {
       makeTextCell(row.task, `${i + 1}.`, (v) => {
         future[i].task = v;
         localStorage.setItem(FUTURE_KEY, JSON.stringify(future));
+        plannerStore.writeFuture(future);
       })
     );
 
@@ -599,6 +632,7 @@ function renderFuture() {
       makeTextCell(row.notes, "", (v) => {
         future[i].notes = v;
         localStorage.setItem(FUTURE_KEY, JSON.stringify(future));
+        plannerStore.writeFuture(future);
       })
     );
 
@@ -610,7 +644,76 @@ function renderFuture() {
   futureBody.querySelectorAll(".cell").forEach(autoGrow);
 }
 
+// --- Read-only mode + sign-in UI --------------------------------------------
+// Apply CAN_EDIT to the static controls. The dynamic cells/checkboxes read
+// CAN_EDIT as they're built, so a re-render picks up the current mode.
+function applyEditMode() {
+  clearBtn.style.display = CAN_EDIT ? "" : "none";
+  dayNotesField.readOnly = !CAN_EDIT;
+  readonlyBanner.hidden = !plannerStore.configured || CAN_EDIT;
+}
+
+function updateAuthUI() {
+  if (!plannerStore.configured) {
+    authBox.hidden = true; // local-only mode: no sign-in needed
+    return;
+  }
+  authBox.hidden = false;
+  authBox.innerHTML = "";
+  const user = plannerStore.user();
+
+  if (user) {
+    const label = document.createElement("span");
+    // The UID is shown so you can copy it into firebase-config.js during setup.
+    label.innerHTML =
+      (CAN_EDIT ? "✎ Editing · " : "Viewing · ") +
+      "<code>" + user.uid + "</code>";
+    const out = document.createElement("button");
+    out.className = "authbtn";
+    out.textContent = "Sign out";
+    out.addEventListener("click", () => plannerStore.signOut());
+    authBox.appendChild(label);
+    authBox.appendChild(out);
+  } else {
+    const btn = document.createElement("button");
+    btn.className = "authbtn";
+    btn.textContent = "Sign in";
+    btn.addEventListener("click", () => plannerStore.signIn());
+    authBox.appendChild(btn);
+  }
+}
+
+function refreshView() {
+  loadDay(viewDate);
+  renderFuture();
+}
+
 // --- Boot --------------------------------------------------------------------
-purgeOldDrafts();
-loadDay(today);
-renderFuture();
+async function boot() {
+  try {
+    await plannerStore.init();
+  } catch (e) {
+    console.error("Store init failed; continuing in local mode.", e);
+  }
+  CAN_EDIT = plannerStore.canEdit();
+
+  purgeOldDrafts();
+  loadDay(today);
+  renderFuture();
+  applyEditMode();
+  updateAuthUI();
+
+  // Viewers (not the owner) get live updates pushed from the owner's edits.
+  plannerStore.subscribe(refreshView);
+
+  // Re-evaluate edit rights whenever sign-in state changes.
+  plannerStore.onAuthChange(() => {
+    CAN_EDIT = plannerStore.canEdit();
+    applyEditMode();
+    updateAuthUI();
+    refreshView();
+    plannerStore.subscribe(refreshView);
+  });
+}
+
+boot();

@@ -244,4 +244,16 @@ function yTicks(max) {
   return [...new Set(out)];
 }
 
-render();
+// Pull the latest shared counts from the cloud (if configured) before drawing,
+// so viewers see the owner's stats — then render.
+(async function boot() {
+  const store = window.plannerStore;
+  if (store && store.configured) {
+    try {
+      await store.init();
+    } catch (e) {
+      console.error("Stats: cloud load failed; showing local data.", e);
+    }
+  }
+  render();
+})();
