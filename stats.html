@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stats — Daily Planner</title>
+  <link rel="stylesheet" href="styles.css?v=6">
+</head>
+<body data-palette="#3a6ea5">
+  <main class="wrap">
+    <div class="topbar">
+      <span class="brand">Stats</span>
+      <a class="pill-link" href="index.html">&larr; Planner</a>
+    </div>
+
+    <header class="head head--stats">
+      <div class="daylabel daylabel--left">
+        <h1>Tasks completed by week</h1>
+        <p class="subtitle">Count of tasks marked complete, grouped by work week (Mon–Fri).</p>
+      </div>
+    </header>
+
+    <figure class="chart-figure">
+      <div id="chart" class="chart"></div>
+    </figure>
+
+    <details class="table-view">
+      <summary>View as table</summary>
+      <table class="data-table" id="statsTable">
+        <thead><tr><th>Week of</th><th>Completed</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </details>
+  </main>
+
+  <script src="stats.js?v=1"></script>
+</body>
+</html>

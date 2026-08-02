@@ -4,10 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Planner</title>
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
-<body>
+<body data-palette="#3a6ea5">
   <main class="wrap">
+    <div class="topbar">
+      <span class="brand">Daily Planner</span>
+      <a class="pill-link" href="stats.html">Stats &rarr;</a>
+    </div>
+
     <header class="head">
       <button id="prevDay" class="navbtn" aria-label="Previous day" title="Previous day">&#9664;</button>
       <div class="daylabel">
@@ -26,16 +31,25 @@
         </tr>
       </thead>
       <tbody id="planBody">
-        <!-- 15 rows injected by script.js -->
+        <!-- 15 active rows injected by script.js -->
       </tbody>
     </table>
 
+    <div class="table-actions">
+      <button id="clearBtn" class="ghost-btn" type="button">Clear day</button>
+    </div>
+
     <section class="completed">
-      <h2 class="completed-head">Completed &middot; past 7 days</h2>
+      <h2 id="completedTodayHead" class="completed-head">Completed today</h2>
+      <ul id="completedTodayList" class="completed-list"></ul>
+    </section>
+
+    <section class="completed">
+      <h2 class="completed-head">Completed &middot; past 7 working days</h2>
       <ul id="completedList" class="completed-list"></ul>
     </section>
   </main>
 
-  <script src="script.js?v=5"></script>
+  <script src="script.js?v=6"></script>
 </body>
 </html>
