@@ -28,4 +28,4 @@ const FIREBASE_CONFIG = {
 
 // The ONLY account allowed to edit. Everyone else (your boss) can view only.
 // Leave as "PASTE_ME" for now; you'll fill it in after your first sign-in.
-const OWNER_UID = "PASTE_ME";
+const OWNER_UID = "oUlrEfx3euMSoqPyQYfcUr1y67I2";
