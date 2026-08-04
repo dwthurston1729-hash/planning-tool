@@ -127,15 +127,19 @@ function newId() {
   return "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 function blankRow() {
-  return { task: "", notes: "" };
+  return { task: "", notes: "", deadline: "" };
 }
 function cleanRow(r) {
-  const out = { task: (r && r.task) || "", notes: (r && r.notes) || "" };
+  const out = {
+    task: (r && r.task) || "",
+    notes: (r && r.notes) || "",
+    deadline: (r && r.deadline) || "",
+  };
   if (r && r.id) out.id = r.id; // stable id lets reorders follow a task across days
   return out;
 }
 function nonBlank(r) {
-  return r.task.trim() || r.notes.trim();
+  return r.task.trim() || r.notes.trim() || (r.deadline || "").trim();
 }
 function padActive(list) {
   const out = list.slice(0, ROWS).map(cleanRow);
@@ -266,6 +270,15 @@ function render() {
       })
     );
 
+    const deadlineTd = document.createElement("td");
+    deadlineTd.appendChild(
+      makeTextCell(row.deadline || "", "e.g. 7/13/26", (v) => {
+        day.active[i].deadline = v;
+        ensureId(i);
+        saveDay();
+      })
+    );
+
     const doneTd = document.createElement("td");
     doneTd.className = "done-cell";
     const box = document.createElement("input");
@@ -307,6 +320,7 @@ function render() {
     tr.appendChild(gripTd);
     tr.appendChild(taskTd);
     tr.appendChild(notesTd);
+    tr.appendChild(deadlineTd);
     tr.appendChild(doneTd);
     body.appendChild(tr);
   });

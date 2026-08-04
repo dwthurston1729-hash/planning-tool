@@ -183,10 +183,11 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-.col-grip  { width: 6%; }
-.col-task  { width: 40%; }
-.col-notes { width: 40%; }
-.col-done  { width: 14%; text-align: center; }
+.col-grip     { width: 6%; }
+.col-task     { width: 34%; }
+.col-notes    { width: 34%; }
+.col-deadline { width: 14%; }
+.col-done     { width: 12%; text-align: center; }
 
 /* --- Drag handle + drag states --- */
 .grip-cell {
