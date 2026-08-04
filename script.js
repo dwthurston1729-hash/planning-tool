@@ -272,7 +272,7 @@ function render() {
 
     const deadlineTd = document.createElement("td");
     deadlineTd.appendChild(
-      makeTextCell(row.deadline || "", "e.g. 7/13/26", (v) => {
+      makeTextCell(row.deadline || "", "", (v) => {
         day.active[i].deadline = v;
         ensureId(i);
         saveDay();
