@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Planner</title>
-  <link rel="stylesheet" href="styles.css?v=13">
+  <link rel="stylesheet" href="styles.css?v=14">
 </head>
 <body data-palette="#3a6ea5">
   <main class="wrap">
@@ -42,7 +42,8 @@
       </div>
     </section>
 
-    <table class="plan-table" aria-label="Daily plan">
+    <h2 class="table-title">Higher priority tasks</h2>
+    <table class="plan-table" aria-label="Higher priority tasks">
       <thead>
         <tr>
           <th class="col-grip" aria-label="Reorder"></th>
@@ -67,7 +68,7 @@
     </section>
 
     <section class="completed">
-      <h2 class="completed-head">Completed &middot; past 7 working days</h2>
+      <h2 class="completed-head">Higher Priority Tasks Completed Past Seven Working Days</h2>
       <ul id="completedList" class="completed-list"></ul>
     </section>
   </main>
@@ -78,6 +79,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js?v=10"></script>
   <script src="store.js?v=9"></script>
-  <script src="script.js?v=14"></script>
+  <script src="script.js?v=15"></script>
 </body>
 </html>

@@ -453,8 +453,8 @@ function restoreToActive(dayObj, completedIndex) {
 function renderCompletedToday() {
   const isToday = keyOf(viewDate) === keyOf(today);
   completedTodayHead.textContent = isToday
-    ? "Completed today"
-    : `Completed · ${viewDate.toLocaleDateString(undefined, {
+    ? "Higher Priority Tasks Completed Today"
+    : `Higher Priority Tasks Completed · ${viewDate.toLocaleDateString(undefined, {
         weekday: "short",
         month: "short",
         day: "numeric",

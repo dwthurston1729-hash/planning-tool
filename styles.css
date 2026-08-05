@@ -345,6 +345,16 @@ body {
 
 .day-notes-field::placeholder { color: #bcbcb6; }
 
+/* --- Table title --- */
+.table-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 0.6rem;
+}
+
 /* --- Completed (past 7 days) --- */
 .completed {
   margin-top: 2.25rem;
