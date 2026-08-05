@@ -239,6 +239,19 @@ body {
 
 .cell::placeholder { color: #bcbcb6; }
 
+/* --- Deadline cell (date picker while empty, locked text once set) --- */
+.deadline-input {
+  min-height: 0;
+  cursor: pointer;
+}
+
+.deadline-locked {
+  display: block;
+  padding: 0.7rem 0.9rem;
+  color: inherit;
+  cursor: default;
+}
+
 /* --- Complete? checkbox --- */
 .done-cell {
   text-align: center;
@@ -279,7 +292,20 @@ body {
 
 /* --- Day notes (free text, per-day, not carried over) --- */
 .day-notes {
-  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.25rem 0 1.75rem;
+}
+
+.day-notes-col {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .day-notes {
+    grid-template-columns: 1fr;
+  }
 }
 
 .day-notes-head {

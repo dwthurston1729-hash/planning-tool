@@ -96,6 +96,7 @@ const titleEl = document.getElementById("dayTitle");
 const dateEl = document.getElementById("dayDate");
 const clearBtn = document.getElementById("clearBtn");
 const dayNotesField = document.getElementById("dayNotes");
+const plannedDayField = document.getElementById("plannedDay");
 const completedTodayHead = document.getElementById("completedTodayHead");
 const completedTodayList = document.getElementById("completedTodayList");
 const completedList = document.getElementById("completedList");
@@ -151,7 +152,10 @@ function padActive(list) {
 // bare-array formats. Returns { active:[15], completed:[] }.
 function normalizeDay(obj) {
   const notes = (o) => (o && typeof o.dayNotes === "string" ? o.dayNotes : "");
-  if (!obj) return { active: padActive([]), completed: [], dayNotes: "" };
+  const planned = (o) =>
+    o && typeof o.plannedDay === "string" ? o.plannedDay : "";
+  if (!obj)
+    return { active: padActive([]), completed: [], dayNotes: "", plannedDay: "" };
 
   // Legacy: bare array of rows with a `done` flag.
   if (Array.isArray(obj)) {
@@ -159,6 +163,7 @@ function normalizeDay(obj) {
       active: padActive(obj.filter((r) => !r.done)),
       completed: obj.filter((r) => r.done).map(cleanRow),
       dayNotes: "",
+      plannedDay: "",
     };
   }
   // Legacy: { rows: [...] } (with or without done flags).
@@ -167,6 +172,7 @@ function normalizeDay(obj) {
       active: padActive(obj.rows.filter((r) => !r.done)),
       completed: obj.rows.filter((r) => r.done).map(cleanRow),
       dayNotes: notes(obj),
+      plannedDay: planned(obj),
     };
   }
   // Current shape.
@@ -174,6 +180,7 @@ function normalizeDay(obj) {
     active: padActive(Array.isArray(obj.active) ? obj.active : []),
     completed: (Array.isArray(obj.completed) ? obj.completed : []).map(cleanRow),
     dayNotes: notes(obj),
+    plannedDay: planned(obj),
   };
 }
 
@@ -272,10 +279,11 @@ function render() {
 
     const deadlineTd = document.createElement("td");
     deadlineTd.appendChild(
-      makeTextCell(row.deadline || "", "", (v) => {
+      makeDeadlineCell(row.deadline || "", (v) => {
         day.active[i].deadline = v;
         ensureId(i);
         saveDay();
+        render(); // re-render so the just-set deadline becomes read-only
       })
     );
 
@@ -384,6 +392,27 @@ function makeTextCell(value, placeholder, onInput) {
     onInput(ta.value);
   });
   return ta;
+}
+
+// Deadline cell: a date you can set exactly once. While empty it's an editable
+// date picker; once a date is chosen (and saved) it renders as locked, read-only
+// text so it can't be changed afterward.
+function makeDeadlineCell(value, onSet) {
+  if (value) {
+    const span = document.createElement("span");
+    span.className = "deadline-locked";
+    span.textContent = value;
+    span.title = "Deadline is locked once set";
+    return span;
+  }
+  const input = document.createElement("input");
+  input.type = "date";
+  input.className = "cell deadline-input";
+  input.disabled = !CAN_EDIT;
+  input.addEventListener("change", () => {
+    if (input.value) onSet(input.value);
+  });
+  return input;
 }
 
 // --- Complete: move active -> completed; grid compacts up --------------------
@@ -538,6 +567,10 @@ dayNotesField.addEventListener("input", () => {
   day.dayNotes = dayNotesField.value;
   saveDay();
 });
+plannedDayField.addEventListener("input", () => {
+  day.plannedDay = plannedDayField.value;
+  saveDay();
+});
 
 // --- Carry-over --------------------------------------------------------------
 // Walk back from `refDate` (exclusive) to the first day that has unfinished
@@ -576,6 +609,7 @@ async function loadDay(date) {
   }
 
   dayNotesField.value = day.dayNotes || "";
+  plannedDayField.value = day.plannedDay || "";
 
   render();
   renderCompletedToday();
@@ -613,57 +647,13 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight" && !nextBtn.disabled) loadDay(nextWorkday(viewDate));
 });
 
-// --- Future tasks (a standalone 10-row backlog, not tied to any day) ---------
-const FUTURE_ROWS = 10;
-const FUTURE_KEY = "plan-future";
-const futureBody = document.getElementById("futureBody");
-
-function loadFuture() {
-  const arr = JSON.parse(localStorage.getItem(FUTURE_KEY) || "[]");
-  const out = (Array.isArray(arr) ? arr : []).slice(0, FUTURE_ROWS).map(cleanRow);
-  while (out.length < FUTURE_ROWS) out.push(blankRow());
-  return out;
-}
-
-function renderFuture() {
-  const future = loadFuture();
-  futureBody.innerHTML = "";
-
-  future.forEach((row, i) => {
-    const tr = document.createElement("tr");
-
-    const taskTd = document.createElement("td");
-    taskTd.appendChild(
-      makeTextCell(row.task, `${i + 1}.`, (v) => {
-        future[i].task = v;
-        localStorage.setItem(FUTURE_KEY, JSON.stringify(future));
-        plannerStore.writeFuture(future);
-      })
-    );
-
-    const notesTd = document.createElement("td");
-    notesTd.appendChild(
-      makeTextCell(row.notes, "", (v) => {
-        future[i].notes = v;
-        localStorage.setItem(FUTURE_KEY, JSON.stringify(future));
-        plannerStore.writeFuture(future);
-      })
-    );
-
-    tr.appendChild(taskTd);
-    tr.appendChild(notesTd);
-    futureBody.appendChild(tr);
-  });
-
-  futureBody.querySelectorAll(".cell").forEach(autoGrow);
-}
-
 // --- Read-only mode + sign-in UI --------------------------------------------
 // Apply CAN_EDIT to the static controls. The dynamic cells/checkboxes read
 // CAN_EDIT as they're built, so a re-render picks up the current mode.
 function applyEditMode() {
   clearBtn.style.display = CAN_EDIT ? "" : "none";
   dayNotesField.readOnly = !CAN_EDIT;
+  plannedDayField.readOnly = !CAN_EDIT;
   readonlyBanner.hidden = !plannerStore.configured || CAN_EDIT;
 }
 
@@ -699,7 +689,6 @@ function updateAuthUI() {
 
 function refreshView() {
   loadDay(viewDate);
-  renderFuture();
 }
 
 // --- Boot --------------------------------------------------------------------
@@ -713,7 +702,6 @@ async function boot() {
 
   purgeOldDrafts();
   loadDay(today);
-  renderFuture();
   applyEditMode();
   updateAuthUI();
 
