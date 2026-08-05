@@ -252,6 +252,14 @@ body {
   cursor: default;
 }
 
+/* Past-due: the whole deadline box goes red, date still readable. */
+.deadline-locked.deadline-past {
+  background: #f8d7da;
+  color: #842029;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 #dc3545;
+}
+
 /* --- Complete? checkbox --- */
 .done-cell {
   text-align: center;

@@ -401,8 +401,14 @@ function makeDeadlineCell(value, onSet) {
   if (value) {
     const span = document.createElement("span");
     span.className = "deadline-locked";
+    // Past due: strictly before the real calendar date (today is not "passed").
+    if (value < keyOf(realToday)) {
+      span.classList.add("deadline-past");
+      span.title = "Deadline has passed";
+    } else {
+      span.title = "Deadline is locked once set";
+    }
     span.textContent = value;
-    span.title = "Deadline is locked once set";
     return span;
   }
   const input = document.createElement("input");
