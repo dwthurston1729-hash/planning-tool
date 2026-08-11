@@ -11,6 +11,14 @@
 
 * { box-sizing: border-box; }
 
+/* --- Quick links (TS360, SLG Tracker) above the day notes --- */
+.quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 0 1.25rem;
+}
+
 body {
   margin: 0;
   background: var(--bg);
