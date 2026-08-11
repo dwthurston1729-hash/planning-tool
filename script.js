@@ -102,6 +102,10 @@ const completedTodayList = document.getElementById("completedTodayList");
 const completedList = document.getElementById("completedList");
 const authBox = document.getElementById("authBox");
 const readonlyBanner = document.getElementById("readonlyBanner");
+const tealAuditBody = document.getElementById("tealAuditBody");
+const tealAuditMeta = document.getElementById("tealAuditMeta");
+const claudeAuditBody = document.getElementById("claudeAuditBody");
+const claudeAuditMeta = document.getElementById("claudeAuditMeta");
 
 // Shared cloud store (defined in store.js). Fallback keeps the app working if
 // opened as a bare file:// with no Firebase scripts.
@@ -113,6 +117,7 @@ const plannerStore = window.plannerStore || {
   writeDay: () => {},
   writeFuture: () => {},
   writeStats: () => {},
+  getAudit: async () => null,
   onAuthChange: () => {},
   signIn: () => {},
   signOut: () => {},
@@ -554,6 +559,140 @@ async function renderRolling() {
   });
 }
 
+// --- Daily audits: TEAL time-tracking + Claude Code activity -----------------
+// Read-only tables fed by the `audit/<day>` Firestore docs (written locally by
+// the PlannerAudit generator). Owner-gated: viewers / not-signed-in get null
+// and see a friendly empty state. A per-load token guards against a slow fetch
+// for an old day landing after you've navigated away.
+let auditLoadToken = 0;
+
+function fmtMins(m) {
+  m = Math.max(0, Math.round(Number(m) || 0));
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return h ? `${h}h ${mm}m` : `${mm}m`;
+}
+
+function auditMessage(container, meta, text) {
+  meta.textContent = "";
+  container.innerHTML = "";
+  const p = document.createElement("p");
+  p.className = "audit-empty";
+  p.textContent = text;
+  container.appendChild(p);
+}
+
+function buildTable(headers, rows) {
+  const table = document.createElement("table");
+  table.className = "audit-table";
+  const thead = document.createElement("thead");
+  const htr = document.createElement("tr");
+  headers.forEach((h) => {
+    const th = document.createElement("th");
+    th.textContent = h.label;
+    if (h.cls) th.className = h.cls;
+    htr.appendChild(th);
+  });
+  thead.appendChild(htr);
+  table.appendChild(thead);
+  const tbody = document.createElement("tbody");
+  rows.forEach((cells) => {
+    const tr = document.createElement("tr");
+    cells.forEach((c, i) => {
+      const td = document.createElement("td");
+      td.textContent = c == null || c === "" ? "—" : c;
+      if (headers[i] && headers[i].cls) td.className = headers[i].cls;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  return table;
+}
+
+function renderTeal(audit) {
+  const teal = audit && audit.teal;
+  const items = (teal && Array.isArray(teal.items) ? teal.items : []).slice();
+  if (!items.length) {
+    auditMessage(tealAuditBody, tealAuditMeta, "No TEAL time tracked on this day.");
+    return;
+  }
+  items.sort((a, b) => String(a.start || "").localeCompare(String(b.start || "")));
+  const total = teal.totalMinutes != null
+    ? teal.totalMinutes
+    : items.reduce((s, it) => s + (Number(it.minutes) || 0), 0);
+  tealAuditMeta.textContent = `${items.length} block${items.length === 1 ? "" : "s"} · ${fmtMins(total)} tracked`;
+  tealAuditBody.innerHTML = "";
+  const headers = [
+    { label: "Time", cls: "col-when" },
+    { label: "Activity" },
+    { label: "Category", cls: "col-cat" },
+    { label: "Ref", cls: "col-ref" },
+    { label: "Duration", cls: "col-dur" },
+  ];
+  const rows = items.map((it) => {
+    const when = it.start && it.end ? `${it.start}–${it.end}` : it.start || "";
+    const ref = it.slg || it.dlg || it.prj || it.qan || it.customer || "";
+    return [when, it.subject || "", it.category || "", ref, fmtMins(it.minutes)];
+  });
+  tealAuditBody.appendChild(buildTable(headers, rows));
+}
+
+function renderClaude(audit) {
+  const cc = audit && audit.claude;
+  const sessions = (cc && Array.isArray(cc.sessions) ? cc.sessions : []).slice();
+  if (!sessions.length) {
+    auditMessage(claudeAuditBody, claudeAuditMeta, "No Claude Code activity on this day.");
+    return;
+  }
+  sessions.sort((a, b) => String(a.start || "").localeCompare(String(b.start || "")));
+  const total = cc.totalActiveMinutes != null
+    ? cc.totalActiveMinutes
+    : sessions.reduce((s, x) => s + (Number(x.activeMinutes) || 0), 0);
+  claudeAuditMeta.textContent = `${sessions.length} session${sessions.length === 1 ? "" : "s"} · ${fmtMins(total)} active`;
+  claudeAuditBody.innerHTML = "";
+  const headers = [
+    { label: "Time", cls: "col-when" },
+    { label: "What I worked on" },
+    { label: "Project", cls: "col-proj" },
+    { label: "Msgs", cls: "col-msgs" },
+    { label: "Active", cls: "col-dur" },
+  ];
+  const rows = sessions.map((s) => {
+    const when = s.start && s.end ? `${s.start}–${s.end}` : s.start || "";
+    return [when, s.title || "(untitled session)", s.project || "", s.messages != null ? String(s.messages) : "", fmtMins(s.activeMinutes)];
+  });
+  claudeAuditBody.appendChild(buildTable(headers, rows));
+}
+
+async function renderAudits() {
+  const token = ++auditLoadToken;
+  const key = keyOf(viewDate);
+
+  // Not signed in as owner: audit reads are denied by rules. Say so rather than
+  // implying there was no activity.
+  if (plannerStore.configured && !CAN_EDIT) {
+    const msg = "Sign in as the owner to view your audit for this day.";
+    auditMessage(tealAuditBody, tealAuditMeta, msg);
+    auditMessage(claudeAuditBody, claudeAuditMeta, msg);
+    return;
+  }
+
+  auditMessage(tealAuditBody, tealAuditMeta, "Loading…");
+  auditMessage(claudeAuditBody, claudeAuditMeta, "Loading…");
+
+  let audit = null;
+  try {
+    audit = await plannerStore.getAudit(key);
+  } catch (_) {
+    audit = null;
+  }
+  if (token !== auditLoadToken) return; // navigated away; drop stale result
+
+  renderTeal(audit);
+  renderClaude(audit);
+}
+
 // --- Clear the day's active tasks (NOT a completion) -------------------------
 clearBtn.addEventListener("click", () => {
   const anything = day.active.some(nonBlank);
@@ -620,6 +759,7 @@ async function loadDay(date) {
   render();
   renderCompletedToday();
   renderRolling();
+  renderAudits();
 }
 
 // --- Header + navigation -----------------------------------------------------

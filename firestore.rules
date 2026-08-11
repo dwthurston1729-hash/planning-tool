@@ -1,0 +1,41 @@
+rules_version = '2';
+
+// Firestore security rules for the Daily Planner.
+//
+// IMPORTANT: Firestore grants access if ANY matching rule allows it. The old
+// rules used a single `/{document=**}` wildcard with `read: if true`, which
+// would ALSO expose the audit docs. So public read is scoped to only the
+// collections viewers need (days, meta); the audit collection is owner-only.
+//
+// Publish these in: Firebase console -> Build -> Firestore Database -> Rules.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner() {
+      return request.auth != null
+             && request.auth.uid == "oUlrEfx3euMSoqPyQYfcUr1y67I2";
+    }
+
+    // Planner tasks — public read (read-only viewers), owner-only write.
+    match /days/{day} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    // Future rows + stats — public read, owner-only write.
+    match /meta/{doc} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    // Daily audits (TEAL + Claude Code). These carry customer-identifying
+    // detail (SLG/DLG/QAN, session titles), so read is restricted to the
+    // owner. Writes arrive from the PlannerAudit service account, which
+    // bypasses rules entirely — no client write is allowed here.
+    match /audit/{day} {
+      allow read: if isOwner();
+      allow write: if false;
+    }
+  }
+}

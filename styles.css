@@ -512,3 +512,79 @@ body {
   border-bottom: 1px solid var(--border);
 }
 .data-table th { color: var(--muted); font-weight: 600; }
+
+/* --- Daily audits (TEAL + Claude Code), read-only tables on the day view --- */
+.audit {
+  margin-top: 2.25rem;
+}
+
+.audit-head {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 0.2rem;
+}
+
+.audit-meta {
+  margin: 0 0 0.6rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.audit-meta:empty { display: none; }
+
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 0.9rem;
+}
+
+.audit-table thead th {
+  background: var(--header);
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.audit-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.audit-table tbody tr:last-child td { border-bottom: none; }
+.audit-table tr:nth-child(even) td { background: var(--row-alt); }
+
+.audit-table .col-when { width: 6.5rem; white-space: nowrap; color: var(--muted); }
+.audit-table .col-cat  { width: 8rem; }
+.audit-table .col-ref  { width: 7rem; }
+.audit-table .col-proj { width: 8rem; color: var(--muted); }
+.audit-table .col-dur  { width: 5rem; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+.audit-table .col-msgs { width: 4rem; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.audit-empty {
+  color: var(--muted);
+  font-size: 0.9rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .audit-table .col-cat,
+  .audit-table .col-ref,
+  .audit-table .col-proj { width: auto; }
+}

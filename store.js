@@ -39,6 +39,7 @@
       writeDay: () => {},
       writeFuture: () => {},
       writeStats: () => {},
+      getAudit: async () => null,
       onAuthChange: () => {},
       signIn: () => {},
       signOut: () => {},
@@ -124,6 +125,20 @@
     );
   }
 
+  // --- Daily audits (read-only; owner-gated by Firestore rules) ------------
+  // The `audit/<YYYY-MM-DD>` docs hold TEAL + Claude Code activity written by
+  // the local PlannerAudit generator. Firestore rules restrict READ to the
+  // owner, so a denied read (viewer / not signed in) simply resolves to null
+  // and the tables show an empty state — no sensitive data reaches viewers.
+  async function getAudit(dayKey) {
+    try {
+      const doc = await db.collection("audit").doc(dayKey).get();
+      return doc.exists ? doc.data() : null;
+    } catch (e) {
+      return null; // permission-denied (not owner) or offline
+    }
+  }
+
   // --- Live updates for viewers -------------------------------------------
   // Only viewers subscribe. The owner is the sole writer and already holds the
   // latest state locally, so re-rendering on every echoed write would just
@@ -170,6 +185,7 @@
     writeDay,
     writeFuture,
     writeStats,
+    getAudit,
     onAuthChange: (cb) => authCbs.push(cb),
     signIn: () =>
       auth

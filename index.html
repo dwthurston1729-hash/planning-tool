@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Planner</title>
-  <link rel="stylesheet" href="styles.css?v=14">
+  <link rel="stylesheet" href="styles.css?v=15">
 </head>
 <body data-palette="#3a6ea5">
   <main class="wrap">
@@ -71,6 +71,20 @@
       <h2 class="completed-head">Higher Priority Tasks Completed Past Seven Working Days</h2>
       <ul id="completedList" class="completed-list"></ul>
     </section>
+
+    <!-- Auto-generated daily audits (read-only, owner-gated via Firestore).
+         Populated per-day by the local PlannerAudit generator; see AUDIT.md. -->
+    <section class="audit" id="tealAudit">
+      <h2 class="audit-head">TEAL &middot; Time Tracked</h2>
+      <p id="tealAuditMeta" class="audit-meta"></p>
+      <div id="tealAuditBody" class="audit-body"></div>
+    </section>
+
+    <section class="audit" id="claudeAudit">
+      <h2 class="audit-head">Claude Code &middot; Session Activity</h2>
+      <p id="claudeAuditMeta" class="audit-meta"></p>
+      <div id="claudeAuditBody" class="audit-body"></div>
+    </section>
   </main>
 
   <!-- Firebase (shared saving). Loaded before the app; see SETUP.md. -->
@@ -78,7 +92,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js?v=10"></script>
-  <script src="store.js?v=9"></script>
-  <script src="script.js?v=15"></script>
+  <script src="store.js?v=10"></script>
+  <script src="script.js?v=16"></script>
 </body>
 </html>
