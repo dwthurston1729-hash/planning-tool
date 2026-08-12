@@ -432,6 +432,45 @@ body {
   margin: 0 0 0.6rem;
 }
 
+/* --- TL meeting agenda (standing event/date list, above the plan table) --- */
+.tl-agenda { margin-bottom: 1.75rem; }
+
+.agenda-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  table-layout: fixed;
+}
+
+.agenda-table thead th {
+  background: var(--header);
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.agenda-table .col-event { width: 68%; }
+.agenda-table .col-agenda-date { width: 32%; }
+
+.agenda-table td {
+  border-bottom: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  padding: 0;
+  vertical-align: top;
+}
+
+.agenda-table td:first-child { border-left: none; }
+.agenda-table tbody tr:last-child td { border-bottom: none; }
+.agenda-table tr:nth-child(even) td { background: var(--row-alt); }
+
 /* --- Completed (past 7 days) --- */
 .completed {
   margin-top: 2.25rem;

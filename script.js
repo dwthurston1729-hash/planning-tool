@@ -22,6 +22,8 @@ const WORKDAYS_BACK = 10;
 const WORKDAYS_FWD = 5;
 const COMPLETED_WORKDAYS = 7;
 const STATS_KEY = "plan-stats"; // { "<YYYY-MM-DD>": completedCount } — persistent
+const AGENDA_KEY = "plan-agenda"; // [ {event,date} × 10 ] — standing TL agenda
+const AGENDA_ROWS = 10;
 
 // --- Date helpers (local time) ----------------------------------------------
 function atMidnight(d) {
@@ -99,6 +101,7 @@ const dayNotesField = document.getElementById("dayNotes");
 const plannedDayField = document.getElementById("plannedDay");
 const top3Body = document.getElementById("top3Body");
 const top3ReviewBody = document.getElementById("top3ReviewBody");
+const agendaBody = document.getElementById("agendaBody");
 const completedTodayHead = document.getElementById("completedTodayHead");
 const completedTodayList = document.getElementById("completedTodayList");
 const completedList = document.getElementById("completedList");
@@ -119,6 +122,7 @@ const plannerStore = window.plannerStore || {
   writeDay: () => {},
   writeFuture: () => {},
   writeStats: () => {},
+  writeAgenda: () => {},
   getAudit: async () => null,
   onAuthChange: () => {},
   signIn: () => {},
@@ -645,6 +649,63 @@ function renderTop3Review() {
   }
 }
 
+// --- TL meeting agenda (standing list, 10 event/date rows) -------------------
+// Unlike the day sections this is NOT per-day: it's a single running list you
+// build up between meetings, shown identically on every day and stored in
+// Firestore meta/tlagenda (owner-write, public-read). Hydrated into localStorage
+// by store.js; viewers get live updates via the store subscription.
+let agenda = padAgenda([]);
+
+function padAgenda(list) {
+  const out = (Array.isArray(list) ? list : [])
+    .slice(0, AGENDA_ROWS)
+    .map((r) => ({ event: (r && r.event) || "", date: (r && r.date) || "" }));
+  while (out.length < AGENDA_ROWS) out.push({ event: "", date: "" });
+  return out;
+}
+
+function loadAgenda() {
+  return padAgenda(JSON.parse(localStorage.getItem(AGENDA_KEY) || "null"));
+}
+
+function saveAgenda() {
+  localStorage.setItem(AGENDA_KEY, JSON.stringify(agenda));
+  plannerStore.writeAgenda(agenda);
+}
+
+function renderAgenda() {
+  agendaBody.innerHTML = "";
+  agenda.forEach((row, i) => {
+    const tr = document.createElement("tr");
+
+    const eventTd = document.createElement("td");
+    eventTd.appendChild(
+      makeTextCell(row.event, "", (v) => {
+        agenda[i].event = v;
+        saveAgenda();
+      })
+    );
+
+    const dateTd = document.createElement("td");
+    dateTd.appendChild(
+      makeTextCell(row.date, "", (v) => {
+        agenda[i].date = v;
+        saveAgenda();
+      })
+    );
+
+    tr.appendChild(eventTd);
+    tr.appendChild(dateTd);
+    agendaBody.appendChild(tr);
+  });
+  agendaBody.querySelectorAll(".cell").forEach(autoGrow);
+}
+
+function reloadAgenda() {
+  agenda = loadAgenda();
+  renderAgenda();
+}
+
 // --- Daily audits: TEAL time-tracking + Claude Code activity -----------------
 // Read-only tables fed by the `audit/<day>` Firestore docs (written locally by
 // the PlannerAudit generator). Owner-gated: viewers / not-signed-in get null
@@ -923,6 +984,7 @@ function updateAuthUI() {
 
 function refreshView() {
   loadDay(viewDate);
+  reloadAgenda();
 }
 
 // --- Boot --------------------------------------------------------------------
@@ -936,6 +998,7 @@ async function boot() {
 
   purgeOldDrafts();
   loadDay(today);
+  reloadAgenda();
   applyEditMode();
   updateAuthUI();
 

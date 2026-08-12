@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Planner</title>
-  <link rel="stylesheet" href="styles.css?v=17">
+  <link rel="stylesheet" href="styles.css?v=18">
 </head>
 <body data-palette="#3a6ea5">
   <main class="wrap">
@@ -32,6 +32,7 @@
     <nav class="quick-links" aria-label="Quick links">
       <a class="pill-link" href="https://ts360/Worklist?type=3&amp;teamID=117&amp;empID=^46731^" target="_blank" rel="noopener">TS360 &rarr;</a>
       <a class="pill-link" href="http://localhost:8791/slg-tracker.html" target="_blank" rel="noopener">SLG Tracker &rarr;</a>
+      <a class="pill-link" href="https://jigsaw.epic.com/EmployeeProfile/Employee/46731" target="_blank" rel="noopener">Jigsaw &rarr;</a>
     </nav>
 
     <section class="day-notes">
@@ -53,6 +54,19 @@
         <textarea id="dayNotes" class="day-notes-field"
           placeholder="Free-form notes for this day (not carried over)."></textarea>
       </div>
+    </section>
+
+    <section class="tl-agenda">
+      <h2 class="table-title">TL meeting agenda</h2>
+      <table class="agenda-table" aria-label="TL meeting agenda">
+        <thead>
+          <tr>
+            <th class="col-event">Event</th>
+            <th class="col-agenda-date">Date</th>
+          </tr>
+        </thead>
+        <tbody id="agendaBody"><!-- 10 rows injected by script.js --></tbody>
+      </table>
     </section>
 
     <h2 class="table-title">Higher priority tasks</h2>
@@ -105,7 +119,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js?v=10"></script>
-  <script src="store.js?v=11"></script>
-  <script src="script.js?v=17"></script>
+  <script src="store.js?v=12"></script>
+  <script src="script.js?v=18"></script>
 </body>
 </html>
