@@ -398,6 +398,11 @@ body {
   overflow-y: auto;       /* scroll inside the cell when text overflows */
 }
 
+/* Planned Top 3 rows have no mirrored-task line, so their input is taller by
+   exactly that one line (0.5rem pad + one 0.85rem line ≈ 1.8rem). Text starts
+   at the very top of the row, and both mini-tables keep the same total height. */
+.mini-input--tall { height: 5.4rem; }
+
 .mini-input:focus {
   background: #eef4fb;
   box-shadow: inset 3px 0 0 var(--accent);
@@ -407,6 +412,7 @@ body {
 
 /* The review table shows the planned task as read-only context above the answer. */
 .mini-task {
+  height: 1.8rem;         /* one fixed line, so the review row height is stable */
   padding: 0.5rem 0.7rem 0;
   font-size: 0.85rem;
   font-weight: 600;
@@ -421,16 +427,6 @@ body {
   font-weight: 400;
   font-style: italic;
 }
-
-/* Invisible one-line placeholder in the Planned Top 3 rows, so those rows match
-   the height of the review rows (which carry the mirrored task line) and the
-   Planned Day / Actual Day fields below the two tables stay aligned. */
-.mini-task-spacer {
-  color: transparent;
-  user-select: none;
-  pointer-events: none;
-}
-.mini-task-spacer::before { content: "\00a0"; }
 
 .day-notes-head--spaced { margin-top: 1.25rem; }
 

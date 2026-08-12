@@ -283,8 +283,6 @@ function render() {
     grip.title = "Drag to reorder";
     if (CAN_EDIT) {
       grip.addEventListener("mousedown", () => (tr.draggable = true));
-    } else {
-      grip.style.visibility = "hidden";
     }
     gripTd.appendChild(grip);
 
@@ -602,20 +600,13 @@ function makeMiniRow(bodyEl, i, value, placeholder, onInput, contextText) {
     if (t) task.title = t; // single-line/ellipsized — show full text on hover
     else task.classList.add("mini-task-empty");
     cellTd.appendChild(task);
-  } else {
-    // Blank spacer line so the Planned Top 3 rows match the review rows'
-    // height, keeping the Planned Day / Actual Day fields below them aligned.
-    const spacer = document.createElement("div");
-    spacer.className = "mini-task mini-task-spacer";
-    spacer.textContent = " ";
-    spacer.setAttribute("aria-hidden", "true");
-    cellTd.appendChild(spacer);
   }
 
   // Fixed-height, scrollable input (like the Planned/Actual Day fields): the row
   // never changes height — overflow scrolls inside the cell instead of growing.
   const ta = document.createElement("textarea");
-  ta.className = "mini-input";
+  ta.className =
+    contextText === undefined ? "mini-input mini-input--tall" : "mini-input";
   ta.value = value || "";
   ta.placeholder = placeholder;
   ta.readOnly = !CAN_EDIT;
