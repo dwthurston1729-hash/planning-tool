@@ -5,6 +5,7 @@
 // daily counts into work weeks (Mon-start) and plot one line.
 
 const STATS_KEY = "plan-stats";
+const INBOX_KEY = "plan-inbox";
 const SVGNS = "http://www.w3.org/2000/svg";
 
 // Palette (single series — the title names it, so no legend).
@@ -39,6 +40,9 @@ function mondayOf(d) {
   return addDays(x, -g);
 }
 function fmtWeek(d) {
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+function fmtDay(d) {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
@@ -215,6 +219,162 @@ function drawChart(series) {
   chartEl.appendChild(svg);
 }
 
+// --- Inbox size: one reading per day, plotted over time ----------------------
+// Source: the "plan-inbox" map { "<YYYY-MM-DD>": inboxSize }, written to
+// Firestore meta/inbox by the PlannerAudit generator (~5 PM daily) and hydrated
+// into localStorage by store.js. Gaps aren't zero-filled — a missing day means
+// "no reading taken", not "an empty inbox" — so we only plot recorded days.
+function dailyInboxSeries() {
+  const m = JSON.parse(localStorage.getItem(INBOX_KEY) || "{}");
+  return Object.keys(m)
+    .filter((k) => Number.isFinite(Number(m[k])))
+    .sort()
+    .map((k) => ({ day: dateFromKey(k), count: Number(m[k]) }));
+}
+
+const inboxChartEl = document.getElementById("inboxChart");
+const inboxTableBody = document.querySelector("#inboxTable tbody");
+
+function renderInbox() {
+  const series = dailyInboxSeries();
+
+  // Table fallback (always populated).
+  inboxTableBody.innerHTML = "";
+  series.forEach((p) => {
+    const tr = document.createElement("tr");
+    const d = document.createElement("td");
+    d.textContent = fmtDay(p.day);
+    const c = document.createElement("td");
+    c.textContent = p.count;
+    tr.appendChild(d);
+    tr.appendChild(c);
+    inboxTableBody.appendChild(tr);
+  });
+
+  if (series.length === 0) {
+    inboxChartEl.innerHTML =
+      '<p class="chart-empty">No inbox readings yet. The daily PlannerAudit task ' +
+      "records your inbox size around 5 PM; check back after it runs.</p>";
+    return;
+  }
+
+  drawInboxChart(series);
+}
+
+function drawInboxChart(series) {
+  const W = 720;
+  const H = 340;
+  const M = { top: 24, right: 28, bottom: 44, left: 44 };
+  const pw = W - M.left - M.right;
+  const ph = H - M.top - M.bottom;
+
+  const maxCount = Math.max(1, ...series.map((p) => p.count));
+  const yMax = niceCeil(maxCount);
+
+  const n = series.length;
+  const xFor = (i) => (n === 1 ? M.left + pw / 2 : M.left + (pw * i) / (n - 1));
+  const yFor = (v) => M.top + ph - (ph * v) / yMax;
+
+  inboxChartEl.innerHTML = "";
+  const svg = document.createElementNS(SVGNS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("class", "chart-svg");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", "Line chart of inbox size per day");
+
+  // Y gridlines + labels.
+  yTicks(yMax).forEach((t) => {
+    const y = yFor(t);
+    svg.appendChild(
+      el("line", {
+        x1: M.left, y1: y, x2: W - M.right, y2: y,
+        stroke: t === 0 ? C.axis : C.grid, "stroke-width": 1,
+      })
+    );
+    svg.appendChild(
+      text(M.left - 8, y + 4, t, { fill: C.muted, "text-anchor": "end", "font-size": 12 })
+    );
+  });
+
+  // X labels (thin out if crowded).
+  const step = Math.ceil(n / 8);
+  series.forEach((p, i) => {
+    if (i % step !== 0 && i !== n - 1) return;
+    svg.appendChild(
+      text(xFor(i), H - M.bottom + 20, fmtDay(p.day), {
+        fill: C.muted, "text-anchor": "middle", "font-size": 12,
+      })
+    );
+  });
+
+  // The line.
+  const dPath = series
+    .map((p, i) => `${i === 0 ? "M" : "L"}${xFor(i)},${yFor(p.count)}`)
+    .join(" ");
+  svg.appendChild(
+    el("path", { d: dPath, fill: "none", stroke: C.line, "stroke-width": 2,
+      "stroke-linejoin": "round", "stroke-linecap": "round" })
+  );
+
+  // Markers.
+  series.forEach((p, i) => {
+    svg.appendChild(
+      el("circle", { cx: xFor(i), cy: yFor(p.count), r: 4,
+        fill: C.surface, stroke: C.line, "stroke-width": 2 })
+    );
+  });
+
+  // Hover layer: crosshair + tooltip.
+  const crosshair = el("line", {
+    y1: M.top, y2: M.top + ph, stroke: C.axis, "stroke-width": 1,
+    "stroke-dasharray": "4 3", opacity: 0,
+  });
+  const focus = el("circle", { r: 5.5, fill: C.line, stroke: C.surface,
+    "stroke-width": 2, opacity: 0 });
+  svg.appendChild(crosshair);
+  svg.appendChild(focus);
+
+  const tip = document.createElement("div");
+  tip.className = "chart-tip";
+  tip.style.opacity = 0;
+  inboxChartEl.appendChild(tip);
+
+  const hit = el("rect", { x: M.left, y: M.top, width: pw, height: ph, fill: "transparent" });
+  svg.appendChild(hit);
+
+  function move(evt) {
+    const pt = svgPoint(svg, evt);
+    let i = n === 1 ? 0 : Math.round(((pt.x - M.left) / pw) * (n - 1));
+    i = Math.max(0, Math.min(n - 1, i));
+    const p = series[i];
+    const x = xFor(i);
+    const y = yFor(p.count);
+
+    crosshair.setAttribute("x1", x);
+    crosshair.setAttribute("x2", x);
+    crosshair.setAttribute("opacity", 1);
+    focus.setAttribute("cx", x);
+    focus.setAttribute("cy", y);
+    focus.setAttribute("opacity", 1);
+
+    tip.style.opacity = 1;
+    tip.innerHTML =
+      `<strong>${p.count}</strong> in inbox<br><span>${fmtDay(p.day)}</span>`;
+    const rect = inboxChartEl.getBoundingClientRect();
+    tip.style.left = (x / W) * rect.width + "px";
+    tip.style.top = (y / H) * rect.height + "px";
+  }
+  function leave() {
+    crosshair.setAttribute("opacity", 0);
+    focus.setAttribute("opacity", 0);
+    tip.style.opacity = 0;
+  }
+  hit.addEventListener("mousemove", move);
+  hit.addEventListener("mouseleave", leave);
+
+  inboxChartEl.appendChild(svg);
+}
+
 // --- Small SVG utils ---------------------------------------------------------
 function el(name, attrs) {
   const e = document.createElementNS(SVGNS, name);
@@ -256,4 +416,5 @@ function yTicks(max) {
     }
   }
   render();
+  renderInbox();
 })();

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Planner</title>
-  <link rel="stylesheet" href="styles.css?v=16">
+  <link rel="stylesheet" href="styles.css?v=17">
 </head>
 <body data-palette="#3a6ea5">
   <main class="wrap">
@@ -36,12 +36,20 @@
 
     <section class="day-notes">
       <div class="day-notes-col">
-        <h2 class="day-notes-head">Planned Day</h2>
+        <h2 class="day-notes-head">Planned Top 3 Tasks</h2>
+        <table class="mini-table" aria-label="Planned top 3 tasks">
+          <tbody id="top3Body"><!-- 3 rows injected by script.js --></tbody>
+        </table>
+        <h2 class="day-notes-head day-notes-head--spaced">Planned Day</h2>
         <textarea id="plannedDay" class="day-notes-field"
           placeholder="Free-form plan for this day (not carried over)."></textarea>
       </div>
       <div class="day-notes-col">
-        <h2 class="day-notes-head">Actual Day</h2>
+        <h2 class="day-notes-head">Did these tasks get done? If not, why?</h2>
+        <table class="mini-table" aria-label="Top 3 task review">
+          <tbody id="top3ReviewBody"><!-- 3 rows injected by script.js --></tbody>
+        </table>
+        <h2 class="day-notes-head day-notes-head--spaced">Actual Day</h2>
         <textarea id="dayNotes" class="day-notes-field"
           placeholder="Free-form notes for this day (not carried over)."></textarea>
       </div>
@@ -97,7 +105,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js?v=10"></script>
-  <script src="store.js?v=10"></script>
-  <script src="script.js?v=16"></script>
+  <script src="store.js?v=11"></script>
+  <script src="script.js?v=17"></script>
 </body>
 </html>

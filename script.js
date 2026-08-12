@@ -97,6 +97,8 @@ const dateEl = document.getElementById("dayDate");
 const clearBtn = document.getElementById("clearBtn");
 const dayNotesField = document.getElementById("dayNotes");
 const plannedDayField = document.getElementById("plannedDay");
+const top3Body = document.getElementById("top3Body");
+const top3ReviewBody = document.getElementById("top3ReviewBody");
 const completedTodayHead = document.getElementById("completedTodayHead");
 const completedTodayList = document.getElementById("completedTodayList");
 const completedList = document.getElementById("completedList");
@@ -159,8 +161,20 @@ function normalizeDay(obj) {
   const notes = (o) => (o && typeof o.dayNotes === "string" ? o.dayNotes : "");
   const planned = (o) =>
     o && typeof o.plannedDay === "string" ? o.plannedDay : "";
+  // Always exactly 3 free-text slots (planned top 3 + their review answers).
+  const triple = (o, key) => {
+    const arr = o && !Array.isArray(o) && Array.isArray(o[key]) ? o[key] : [];
+    return [0, 1, 2].map((i) => (typeof arr[i] === "string" ? arr[i] : ""));
+  };
   if (!obj)
-    return { active: padActive([]), completed: [], dayNotes: "", plannedDay: "" };
+    return {
+      active: padActive([]),
+      completed: [],
+      dayNotes: "",
+      plannedDay: "",
+      top3: ["", "", ""],
+      top3Review: ["", "", ""],
+    };
 
   // Legacy: bare array of rows with a `done` flag.
   if (Array.isArray(obj)) {
@@ -169,6 +183,8 @@ function normalizeDay(obj) {
       completed: obj.filter((r) => r.done).map(cleanRow),
       dayNotes: "",
       plannedDay: "",
+      top3: ["", "", ""],
+      top3Review: ["", "", ""],
     };
   }
   // Legacy: { rows: [...] } (with or without done flags).
@@ -178,6 +194,8 @@ function normalizeDay(obj) {
       completed: obj.rows.filter((r) => r.done).map(cleanRow),
       dayNotes: notes(obj),
       plannedDay: planned(obj),
+      top3: triple(obj, "top3"),
+      top3Review: triple(obj, "top3Review"),
     };
   }
   // Current shape.
@@ -186,6 +204,8 @@ function normalizeDay(obj) {
     completed: (Array.isArray(obj.completed) ? obj.completed : []).map(cleanRow),
     dayNotes: notes(obj),
     plannedDay: planned(obj),
+    top3: triple(obj, "top3"),
+    top3Review: triple(obj, "top3Review"),
   };
 }
 
@@ -559,6 +579,72 @@ async function renderRolling() {
   });
 }
 
+// --- Planned Top 3 + their review (per-day, 3 free-text rows each) -----------
+// The top-3 table is free text. The review table mirrors each planned task as
+// read-only context ("did THIS get done?") above a free-text answer field.
+function makeMiniRow(bodyEl, i, value, placeholder, onInput, contextText) {
+  const tr = document.createElement("tr");
+
+  const numTd = document.createElement("td");
+  numTd.className = "mini-num";
+  numTd.textContent = i + 1 + ".";
+
+  const cellTd = document.createElement("td");
+  if (contextText !== undefined) {
+    const task = document.createElement("div");
+    task.className = "mini-task";
+    const t = (contextText || "").trim();
+    task.textContent = t || "(no planned task)";
+    if (!t) task.classList.add("mini-task-empty");
+    cellTd.appendChild(task);
+  }
+
+  const ta = document.createElement("textarea");
+  ta.className = "mini-input";
+  ta.rows = 1;
+  ta.value = value || "";
+  ta.placeholder = placeholder;
+  ta.readOnly = !CAN_EDIT;
+  ta.addEventListener("input", () => {
+    autoGrow(ta);
+    onInput(ta.value);
+  });
+  cellTd.appendChild(ta);
+
+  tr.appendChild(numTd);
+  tr.appendChild(cellTd);
+  bodyEl.appendChild(tr);
+  autoGrow(ta);
+}
+
+function renderTop3() {
+  top3Body.innerHTML = "";
+  for (let i = 0; i < 3; i++) {
+    makeMiniRow(top3Body, i, day.top3[i], "Top task…", (v) => {
+      day.top3[i] = v;
+      saveDay();
+      renderTop3Review(); // keep the mirrored task text in sync
+    });
+  }
+}
+
+function renderTop3Review() {
+  top3ReviewBody.innerHTML = "";
+  for (let i = 0; i < 3; i++) {
+    makeMiniRow(
+      top3ReviewBody,
+      i,
+      day.top3Review[i],
+      "Done? If not, why?",
+      (v) => {
+        day.top3Review[i] = v;
+        saveDay();
+      },
+      day.top3[i]
+    );
+  }
+}
+
 // --- Daily audits: TEAL time-tracking + Claude Code activity -----------------
 // Read-only tables fed by the `audit/<day>` Firestore docs (written locally by
 // the PlannerAudit generator). Owner-gated: viewers / not-signed-in get null
@@ -757,6 +843,8 @@ async function loadDay(date) {
   plannedDayField.value = day.plannedDay || "";
 
   render();
+  renderTop3();
+  renderTop3Review();
   renderCompletedToday();
   renderRolling();
   renderAudits();

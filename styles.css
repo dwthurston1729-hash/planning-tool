@@ -353,6 +353,75 @@ body {
 
 .day-notes-field::placeholder { color: #bcbcb6; }
 
+/* --- Mini tables (Planned Top 3 + their review), above the day notes --- */
+.mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  table-layout: fixed;
+  margin-bottom: 0.5rem;
+}
+
+.mini-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 0;
+  vertical-align: top;
+}
+
+.mini-table tr:last-child td { border-bottom: none; }
+
+.mini-table .mini-num {
+  width: 2rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  padding: 0.6rem 0.2rem;
+  border-right: 1px solid var(--border);
+  background: var(--row-alt);
+}
+
+.mini-input {
+  display: block;
+  width: 100%;
+  min-height: 2.4rem;
+  padding: 0.55rem 0.7rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  resize: none;
+  outline: none;
+  overflow: hidden;
+}
+
+.mini-input:focus {
+  background: #eef4fb;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.mini-input::placeholder { color: #bcbcb6; }
+
+/* The review table shows the planned task as read-only context above the answer. */
+.mini-task {
+  padding: 0.5rem 0.7rem 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.mini-task-empty {
+  color: #bcbcb6;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.day-notes-head--spaced { margin-top: 1.25rem; }
+
 /* --- Table title --- */
 .table-title {
   font-size: 0.8rem;
@@ -454,6 +523,7 @@ body {
 
 /* --- Stats page --- */
 .head--stats { display: block; margin-bottom: 1rem; }
+.head--section { margin-top: 3rem; }
 .daylabel--left { text-align: left; }
 .head--stats h1 { font-size: 1.5rem; }
 

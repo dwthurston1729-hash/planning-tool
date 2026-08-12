@@ -63,6 +63,16 @@ history and a day the machine was off self-heals on the next run.
 - Logs:  `%LOCALAPPDATA%\PlannerAudit\logs\`
 - Change the time / disable:  Task Scheduler → **PlannerAudit**
 
+## Inbox size on the Stats page
+
+The same daily generator also records the size of your main Outlook inbox once a
+day (~5 PM, when the 5:30 task runs) and writes the running series to
+`meta/inbox` — a single `{ counts: { "<date>": n } }` rollup. Unlike the audit
+tables this is **not** sensitive (just a number), so `meta/inbox` stays
+public-read like `meta/stats`, and the **Stats** page plots it as a line over
+time. Inbox size is point-in-time, so it's never backfilled: the chart fills in
+one day at a time going forward.
+
 ## Seeing the tables
 
 Because the data is owner-gated, open the site and click **Sign in** with your

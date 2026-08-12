@@ -16,12 +16,14 @@
 //    days/<YYYY-MM-DD>  ->  { active, completed, dayNotes }
 //    meta/future        ->  { rows: [...] }
 //    meta/stats         ->  { counts: { "<YYYY-MM-DD>": completedCount } }
+//    meta/inbox         ->  { counts: { "<YYYY-MM-DD>": inboxSizeAt5pm } }
 // ===========================================================================
 
 (function () {
   const DRAFT_PREFIX = "plan-draft:";
   const STATS_KEY = "plan-stats";
   const FUTURE_KEY = "plan-future";
+  const INBOX_KEY = "plan-inbox";
 
   const configured =
     typeof FIREBASE_CONFIG === "object" &&
@@ -82,6 +84,11 @@
       const st = await db.collection("meta").doc("stats").get();
       if (st.exists && st.data().counts) {
         localStorage.setItem(STATS_KEY, JSON.stringify(st.data().counts));
+      }
+      // Daily inbox size at ~5 PM, written by the PlannerAudit generator.
+      const ib = await db.collection("meta").doc("inbox").get();
+      if (ib.exists && ib.data().counts) {
+        localStorage.setItem(INBOX_KEY, JSON.stringify(ib.data().counts));
       }
     } catch (e) {
       console.error("Firestore hydrate failed; using local cache.", e);

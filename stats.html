@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stats — Daily Planner</title>
-  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="styles.css?v=17">
 </head>
 <body data-palette="#3a6ea5">
   <main class="wrap">
@@ -31,6 +31,25 @@
         <tbody></tbody>
       </table>
     </details>
+
+    <header class="head head--stats head--section">
+      <div class="daylabel daylabel--left">
+        <h1>Emails in inbox at 5 PM</h1>
+        <p class="subtitle">Size of your main Outlook inbox, recorded once a day (~5 PM), tracked over time.</p>
+      </div>
+    </header>
+
+    <figure class="chart-figure">
+      <div id="inboxChart" class="chart"></div>
+    </figure>
+
+    <details class="table-view">
+      <summary>View as table</summary>
+      <table class="data-table" id="inboxTable">
+        <thead><tr><th>Day</th><th>Inbox size</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </details>
   </main>
 
   <!-- Firebase (shared saving). Loaded before the chart; see SETUP.md. -->
@@ -38,7 +57,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js?v=10"></script>
-  <script src="store.js?v=9"></script>
-  <script src="stats.js?v=2"></script>
+  <script src="store.js?v=11"></script>
+  <script src="stats.js?v=3"></script>
 </body>
 </html>
