@@ -387,7 +387,7 @@ body {
 .mini-input {
   display: block;
   width: 100%;
-  min-height: 2.4rem;
+  height: 3.6rem;         /* fixed — the row never changes height */
   padding: 0.55rem 0.7rem;
   border: none;
   background: transparent;
@@ -395,7 +395,7 @@ body {
   font: inherit;
   resize: none;
   outline: none;
-  overflow: hidden;
+  overflow-y: auto;       /* scroll inside the cell when text overflows */
 }
 
 .mini-input:focus {
@@ -411,7 +411,9 @@ body {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text);
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mini-task-empty {
