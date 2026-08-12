@@ -636,6 +636,7 @@ function renderTop3() {
       day.top3[i] = v;
       saveDay();
       renderTop3Review(); // keep the mirrored task text in sync
+      syncMiniRowHeights();
     });
   }
 }
@@ -651,11 +652,34 @@ function renderTop3Review() {
       (v) => {
         day.top3Review[i] = v;
         saveDay();
+        syncMiniRowHeights();
       },
       day.top3[i]
     );
   }
+  syncMiniRowHeights();
 }
+
+// Force each Planned-Top-3 row to the same height as its review-table
+// counterpart (the taller of the pair). Row content can wrap to different line
+// counts, so a fixed spacer isn't enough — this keeps the two tables the same
+// total height so the Planned Day / Actual Day fields below them stay aligned.
+function syncMiniRowHeights() {
+  if (!top3Body || !top3ReviewBody) return;
+  const a = top3Body.querySelectorAll("tr");
+  const b = top3ReviewBody.querySelectorAll("tr");
+  const n = Math.min(a.length, b.length);
+  for (let i = 0; i < n; i++) {
+    a[i].style.height = "auto";
+    b[i].style.height = "auto";
+  }
+  for (let i = 0; i < n; i++) {
+    const h = Math.max(a[i].offsetHeight, b[i].offsetHeight);
+    a[i].style.height = h + "px";
+    b[i].style.height = h + "px";
+  }
+}
+window.addEventListener("resize", syncMiniRowHeights);
 
 // --- TL meeting agenda (standing list, 10 event/date rows) -------------------
 // Unlike the day sections this is NOT per-day: it's a single running list you
@@ -1008,6 +1032,11 @@ async function boot() {
   loadDay(today);
   reloadAgenda();
   applyEditMode();
+
+  // Re-align the mini-table rows once web fonts settle (line heights can shift).
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(syncMiniRowHeights);
+  }
   updateAuthUI();
 
   // Viewers (not the owner) get live updates pushed from the owner's edits.
