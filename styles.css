@@ -420,6 +420,16 @@ body {
   font-style: italic;
 }
 
+/* Invisible one-line placeholder in the Planned Top 3 rows, so those rows match
+   the height of the review rows (which carry the mirrored task line) and the
+   Planned Day / Actual Day fields below the two tables stay aligned. */
+.mini-task-spacer {
+  color: transparent;
+  user-select: none;
+  pointer-events: none;
+}
+.mini-task-spacer::before { content: "\00a0"; }
+
 .day-notes-head--spaced { margin-top: 1.25rem; }
 
 /* --- Table title --- */

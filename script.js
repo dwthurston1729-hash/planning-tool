@@ -601,6 +601,14 @@ function makeMiniRow(bodyEl, i, value, placeholder, onInput, contextText) {
     task.textContent = t || "(no planned task)";
     if (!t) task.classList.add("mini-task-empty");
     cellTd.appendChild(task);
+  } else {
+    // Blank spacer line so the Planned Top 3 rows match the review rows'
+    // height, keeping the Planned Day / Actual Day fields below them aligned.
+    const spacer = document.createElement("div");
+    spacer.className = "mini-task mini-task-spacer";
+    spacer.textContent = " ";
+    spacer.setAttribute("aria-hidden", "true");
+    cellTd.appendChild(spacer);
   }
 
   const ta = document.createElement("textarea");
