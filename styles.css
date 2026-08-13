@@ -697,6 +697,11 @@ body {
 .audit-table .col-proj { width: 8rem; color: var(--muted); }
 .audit-table .col-dur  { width: 5rem; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
 .audit-table .col-msgs { width: 4rem; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.audit-table .col-slgnum { width: 7rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.audit-table .col-cust { width: 12rem; color: var(--muted); }
+
+.audit-table a { color: var(--accent); text-decoration: none; font-weight: 550; }
+.audit-table a:hover { text-decoration: underline; }
 
 .audit-empty {
   color: var(--muted);
@@ -711,5 +716,6 @@ body {
 @media (max-width: 640px) {
   .audit-table .col-cat,
   .audit-table .col-ref,
-  .audit-table .col-proj { width: auto; }
+  .audit-table .col-proj,
+  .audit-table .col-cust { width: auto; }
 }

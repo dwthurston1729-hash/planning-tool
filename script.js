@@ -107,6 +107,8 @@ const completedTodayList = document.getElementById("completedTodayList");
 const completedList = document.getElementById("completedList");
 const authBox = document.getElementById("authBox");
 const readonlyBanner = document.getElementById("readonlyBanner");
+const slgAuditBody = document.getElementById("slgAuditBody");
+const slgAuditMeta = document.getElementById("slgAuditMeta");
 const tealAuditBody = document.getElementById("tealAuditBody");
 const tealAuditMeta = document.getElementById("tealAuditMeta");
 const claudeAuditBody = document.getElementById("claudeAuditBody");
@@ -744,7 +746,16 @@ function buildTable(headers, rows) {
     const tr = document.createElement("tr");
     cells.forEach((c, i) => {
       const td = document.createElement("td");
-      td.textContent = c == null || c === "" ? "—" : c;
+      if (c && typeof c === "object" && c.href) {
+        const a = document.createElement("a");
+        a.href = c.href;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = c.text == null || c.text === "" ? "—" : c.text;
+        td.appendChild(a);
+      } else {
+        td.textContent = c == null || c === "" ? "—" : c;
+      }
       if (headers[i] && headers[i].cls) td.className = headers[i].cls;
       tr.appendChild(td);
     });
@@ -752,6 +763,70 @@ function buildTable(headers, rows) {
   });
   table.appendChild(tbody);
   return table;
+}
+
+// Deep link into Sherlock for a given SLG number (same format the SLG Tracker
+// uses). Owner-only view, so linking straight to the record is fine.
+const slgUrl = (id) =>
+  `https://sherlock.epic.com/default.aspx?view=slg/home#id=${encodeURIComponent(id)}`;
+
+// Sherlocks worked on this day. Prefer the generator-supplied `audit.slgs`
+// (enriched with real title/customer/time from the local SLG title cache);
+// fall back to the bare SLG numbers parsed out of that day's TEAL blocks so
+// the section still works before the enrichment lands.
+function renderSlgs(audit) {
+  const list = audit && Array.isArray(audit.slgs) ? audit.slgs.slice() : null;
+  if (list && list.length) {
+    list.sort((a, b) => (Number(b.minutes) || 0) - (Number(a.minutes) || 0));
+    const totalMin = list.reduce((s, x) => s + (Number(x.minutes) || 0), 0);
+    slgAuditMeta.textContent =
+      `${list.length} Sherlock${list.length === 1 ? "" : "s"}` +
+      (totalMin ? ` · ${fmtMins(totalMin)} tracked` : "");
+    const headers = [
+      { label: "SLG", cls: "col-slgnum" },
+      { label: "Title" },
+      { label: "Customer", cls: "col-cust" },
+      { label: "Time", cls: "col-dur" },
+    ];
+    const rows = list.map((s) => [
+      { href: s.url || slgUrl(s.id), text: s.id },
+      s.title || "",
+      s.customer || "",
+      s.minutes ? fmtMins(s.minutes) : "",
+    ]);
+    slgAuditBody.innerHTML = "";
+    slgAuditBody.appendChild(buildTable(headers, rows));
+    return;
+  }
+
+  // Fallback: distinct SLG numbers from this day's TEAL holds.
+  const items =
+    audit && audit.teal && Array.isArray(audit.teal.items) ? audit.teal.items : [];
+  const byId = new Map();
+  items.forEach((it) => {
+    const id = String((it && it.slg) || "").replace(/\D/g, "");
+    if (!id) return;
+    byId.set(id, (byId.get(id) || 0) + (Number(it.minutes) || 0));
+  });
+  if (!byId.size) {
+    auditMessage(slgAuditBody, slgAuditMeta, "No Sherlocks tracked on this day.");
+    return;
+  }
+  const derived = [...byId.entries()].sort((a, b) => b[1] - a[1]);
+  slgAuditMeta.textContent =
+    `${derived.length} Sherlock${derived.length === 1 ? "" : "s"}`;
+  const headers = [
+    { label: "SLG", cls: "col-slgnum" },
+    { label: "Title" },
+    { label: "Time", cls: "col-dur" },
+  ];
+  const rows = derived.map(([id, min]) => [
+    { href: slgUrl(id), text: id },
+    "",
+    min ? fmtMins(min) : "",
+  ]);
+  slgAuditBody.innerHTML = "";
+  slgAuditBody.appendChild(buildTable(headers, rows));
 }
 
 function renderTeal(audit) {
@@ -817,11 +892,13 @@ async function renderAudits() {
   // implying there was no activity.
   if (plannerStore.configured && !CAN_EDIT) {
     const msg = "Sign in as the owner to view your audit for this day.";
+    auditMessage(slgAuditBody, slgAuditMeta, msg);
     auditMessage(tealAuditBody, tealAuditMeta, msg);
     auditMessage(claudeAuditBody, claudeAuditMeta, msg);
     return;
   }
 
+  auditMessage(slgAuditBody, slgAuditMeta, "Loading…");
   auditMessage(tealAuditBody, tealAuditMeta, "Loading…");
   auditMessage(claudeAuditBody, claudeAuditMeta, "Loading…");
 
@@ -833,6 +910,7 @@ async function renderAudits() {
   }
   if (token !== auditLoadToken) return; // navigated away; drop stale result
 
+  renderSlgs(audit);
   renderTeal(audit);
   renderClaude(audit);
 }

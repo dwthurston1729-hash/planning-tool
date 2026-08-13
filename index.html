@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Planner</title>
-  <link rel="stylesheet" href="styles.css?v=21">
+  <link rel="stylesheet" href="styles.css?v=22">
 </head>
 <body data-palette="#3a6ea5">
   <main class="wrap">
@@ -107,6 +107,12 @@
 
     <!-- Auto-generated daily audits (read-only, owner-gated via Firestore).
          Populated per-day by the local PlannerAudit generator; see AUDIT.md. -->
+    <section class="audit" id="slgAudit">
+      <h2 class="audit-head">Sherlocks &middot; Worked On</h2>
+      <p id="slgAuditMeta" class="audit-meta"></p>
+      <div id="slgAuditBody" class="audit-body"></div>
+    </section>
+
     <section class="audit" id="tealAudit">
       <h2 class="audit-head">TEAL &middot; Time Tracked</h2>
       <p id="tealAuditMeta" class="audit-meta"></p>
@@ -126,6 +132,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js?v=10"></script>
   <script src="store.js?v=12"></script>
-  <script src="script.js?v=22"></script>
+  <script src="script.js?v=23"></script>
 </body>
 </html>
