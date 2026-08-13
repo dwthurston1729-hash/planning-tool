@@ -1,12 +1,21 @@
 # Daily audits — TEAL + Claude Code
 
-The day view shows two auto-generated, read-only tables below the completed
+The day view shows three auto-generated, read-only tables below the completed
 lists:
 
+- **Sherlocks · Worked On** — the distinct SLGs worked that day, taken from the
+  SLG references on that day's TEAL holds and enriched with the record's title,
+  customer, status, and time tracked. Each SLG number links straight into
+  Sherlock. Falls back to the bare SLG numbers if the enriched list is absent.
 - **TEAL · Time Tracked** — the categorized holds TEAL writes to your **TEAL**
   Outlook calendar that day (subject, category, SLG/DLG/QAN reference, minutes).
 - **Claude Code · Session Activity** — what you worked on in Claude Code that
   day, one row per session (title, project, start–end, active time, messages).
+
+The Sherlocks list is enriched from the local SLG Tracker title cache
+(`slg-titles.js`, path in `config.json` → `slgTitlesPath`). Because titles and
+customer names are customer-identifying, they only ever live in the
+owner-read-only `audit/<date>` doc — never in this public repo.
 
 They change per day because they're generated from that day's real activity.
 
