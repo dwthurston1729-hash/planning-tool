@@ -11,7 +11,15 @@
 
 * { box-sizing: border-box; }
 
-/* --- Quick links (TS360, SLG Tracker) above the day notes --- */
+/* --- General and customer link groups above the day notes --- */
+.quick-links-heading {
+  margin: 0 0 0.6rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
 .quick-links {
   display: flex;
   flex-wrap: wrap;
