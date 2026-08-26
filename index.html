@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Planner</title>
-  <link rel="stylesheet" href="styles.css?v=24">
+  <link rel="stylesheet" href="styles.css?v=25">
 </head>
 <body data-palette="#3a6ea5">
   <main class="wrap">
@@ -29,7 +29,7 @@
       <button id="nextDay" class="navbtn" aria-label="Next day" title="Next day">&#9654;</button>
     </header>
 
-    <h2 class="quick-links-heading">General Links</h2>
+    <h2 class="quick-links-heading section-highlight section-highlight--blue">General Links</h2>
     <nav class="quick-links" aria-label="General links">
       <a class="pill-link" href="https://ts360/Worklist?type=3&amp;teamID=117&amp;empID=^46731^" target="_blank" rel="noopener">TS360 &rarr;</a>
       <a class="pill-link" href="http://localhost:8791/slg-tracker.html" target="_blank" rel="noopener">SLG Tracker &rarr;</a>
@@ -41,7 +41,7 @@
       <a class="pill-link" href="https://install.epic.com/Home" target="_blank" rel="noopener">Mission Control &rarr;</a>
       <a class="pill-link" href="https://brainbow/Immersion/GoLives.aspx?&amp;application=3&amp;newFilter=1" target="_blank" rel="noopener">Go Lives &rarr;</a>
     </nav>
-    <h2 class="quick-links-heading">Customer-specific Links</h2>
+    <h2 class="quick-links-heading section-highlight section-highlight--red">Customer-specific Links</h2>
     <nav class="quick-links" aria-label="Customer-specific links">
       <a class="pill-link" href="https://wiki.epic.com/main/Grand_Central/TS/Grand_Central_Customer_Hub/Grand_Central_at_KP_Hawaii" target="_blank" rel="noopener">KP Hawaii wiki page &rarr;</a>
       <a class="pill-link" href="https://wiki.epic.com/main/Grand_Central/TS/Grand_Central_Customer_Hub/Grand_Central_at_KP_Northwest" target="_blank" rel="noopener">KP Northwest wiki page &rarr;</a>
@@ -53,27 +53,32 @@
 
     <section class="day-notes">
       <div class="day-notes-col">
-        <h2 class="day-notes-head">Planned Top 3 Tasks</h2>
+        <h2 class="day-notes-head section-highlight section-highlight--orange">Planned Top 3 Tasks</h2>
         <table class="mini-table" aria-label="Planned top 3 tasks">
           <tbody id="top3Body"><!-- 3 rows injected by script.js --></tbody>
         </table>
-        <h2 class="day-notes-head day-notes-head--spaced">Planned Day</h2>
+        <h2 class="day-notes-head day-notes-head--spaced section-highlight section-highlight--purple">Planned Day</h2>
         <textarea id="plannedDay" class="day-notes-field"
           placeholder="Free-form plan for this day (not carried over)."></textarea>
       </div>
       <div class="day-notes-col">
-        <h2 class="day-notes-head">Did these tasks get done? If not, why?</h2>
+        <h2 class="day-notes-head section-highlight section-highlight--orange">Did these tasks get done? If not, why?</h2>
         <table class="mini-table" aria-label="Top 3 task review">
           <tbody id="top3ReviewBody"><!-- 3 rows injected by script.js --></tbody>
         </table>
-        <h2 class="day-notes-head day-notes-head--spaced">Actual Day</h2>
+        <h2 class="day-notes-head day-notes-head--spaced section-highlight section-highlight--purple">Actual Day</h2>
         <textarea id="dayNotes" class="day-notes-field"
           placeholder="Free-form notes for this day (not carried over)."></textarea>
+      </div>
+      <div class="day-notes-col day-notes-col--full">
+        <h2 class="day-notes-head">Today's Sherlocks</h2>
+        <textarea id="todaysSherlocks" class="day-notes-field"
+          placeholder="Sherlocks to work on today (not carried over)."></textarea>
       </div>
     </section>
 
     <section class="tl-agenda">
-      <h2 class="table-title">TL meeting agenda</h2>
+      <h2 class="table-title section-highlight section-highlight--gold">TL meeting agenda</h2>
       <table class="agenda-table" aria-label="TL meeting agenda">
         <thead>
           <tr>
@@ -115,20 +120,7 @@
       <ul id="completedList" class="completed-list"></ul>
     </section>
 
-    <!-- Auto-generated daily audits (read-only, owner-gated via Firestore).
-         Populated per-day by the local PlannerAudit generator; see AUDIT.md. -->
-    <section class="audit" id="slgAudit">
-      <h2 class="audit-head">Sherlocks &middot; Worked On</h2>
-      <p id="slgAuditMeta" class="audit-meta"></p>
-      <div id="slgAuditBody" class="audit-body"></div>
-    </section>
-
-    <section class="audit" id="tealAudit">
-      <h2 class="audit-head">TEAL &middot; Time Tracked</h2>
-      <p id="tealAuditMeta" class="audit-meta"></p>
-      <div id="tealAuditBody" class="audit-body"></div>
-    </section>
-
+    <!-- Auto-generated Claude Code activity (read-only, owner-gated via Firestore). -->
     <section class="audit" id="claudeAudit">
       <h2 class="audit-head">Claude Code &middot; Session Activity</h2>
       <p id="claudeAuditMeta" class="audit-meta"></p>
@@ -142,6 +134,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js?v=10"></script>
   <script src="store.js?v=12"></script>
-  <script src="script.js?v=23"></script>
+  <script src="script.js?v=24"></script>
 </body>
 </html>

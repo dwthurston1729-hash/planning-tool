@@ -99,6 +99,7 @@ const dateEl = document.getElementById("dayDate");
 const clearBtn = document.getElementById("clearBtn");
 const dayNotesField = document.getElementById("dayNotes");
 const plannedDayField = document.getElementById("plannedDay");
+const todaysSherlocksField = document.getElementById("todaysSherlocks");
 const top3Body = document.getElementById("top3Body");
 const top3ReviewBody = document.getElementById("top3ReviewBody");
 const agendaBody = document.getElementById("agendaBody");
@@ -167,6 +168,8 @@ function normalizeDay(obj) {
   const notes = (o) => (o && typeof o.dayNotes === "string" ? o.dayNotes : "");
   const planned = (o) =>
     o && typeof o.plannedDay === "string" ? o.plannedDay : "";
+  const sherlocks = (o) =>
+    o && typeof o.todaysSherlocks === "string" ? o.todaysSherlocks : "";
   // Always exactly 3 free-text slots (planned top 3 + their review answers).
   const triple = (o, key) => {
     const arr = o && !Array.isArray(o) && Array.isArray(o[key]) ? o[key] : [];
@@ -179,6 +182,7 @@ function normalizeDay(obj) {
       dayNotes: "",
       plannedDay: "",
       top3: ["", "", ""],
+      todaysSherlocks: "",
       top3Review: ["", "", ""],
     };
 
@@ -190,6 +194,7 @@ function normalizeDay(obj) {
       dayNotes: "",
       plannedDay: "",
       top3: ["", "", ""],
+      todaysSherlocks: "",
       top3Review: ["", "", ""],
     };
   }
@@ -201,6 +206,7 @@ function normalizeDay(obj) {
       dayNotes: notes(obj),
       plannedDay: planned(obj),
       top3: triple(obj, "top3"),
+      todaysSherlocks: sherlocks(obj),
       top3Review: triple(obj, "top3Review"),
     };
   }
@@ -211,6 +217,7 @@ function normalizeDay(obj) {
     dayNotes: notes(obj),
     plannedDay: planned(obj),
     top3: triple(obj, "top3"),
+    todaysSherlocks: sherlocks(obj),
     top3Review: triple(obj, "top3Review"),
   };
 }
@@ -776,6 +783,7 @@ const slgUrl = (id) =>
 // the section still works before the enrichment lands.
 function renderSlgs(audit) {
   const list = audit && Array.isArray(audit.slgs) ? audit.slgs.slice() : null;
+  if (!slgAuditBody || !slgAuditMeta) return;
   if (list && list.length) {
     list.sort((a, b) => (Number(b.minutes) || 0) - (Number(a.minutes) || 0));
     const totalMin = list.reduce((s, x) => s + (Number(x.minutes) || 0), 0);
@@ -831,6 +839,7 @@ function renderSlgs(audit) {
 
 function renderTeal(audit) {
   const teal = audit && audit.teal;
+  if (!tealAuditBody || !tealAuditMeta) return;
   const items = (teal && Array.isArray(teal.items) ? teal.items : []).slice();
   if (!items.length) {
     auditMessage(tealAuditBody, tealAuditMeta, "No TEAL time tracked on this day.");
@@ -939,6 +948,11 @@ plannedDayField.addEventListener("input", () => {
   saveDay();
 });
 
+todaysSherlocksField.addEventListener("input", () => {
+  day.todaysSherlocks = todaysSherlocksField.value;
+  saveDay();
+});
+
 // --- Carry-over --------------------------------------------------------------
 // Walk back from `refDate` (exclusive) to the first day that has unfinished
 // tasks, and return them. Used to seed today and any un-started future day.
@@ -979,6 +993,7 @@ async function loadDay(date) {
   plannedDayField.value = day.plannedDay || "";
 
   render();
+  todaysSherlocksField.value = day.todaysSherlocks || "";
   renderTop3();
   renderTop3Review();
   renderCompletedToday();
@@ -1024,6 +1039,7 @@ function applyEditMode() {
   clearBtn.style.display = CAN_EDIT ? "" : "none";
   dayNotesField.readOnly = !CAN_EDIT;
   plannedDayField.readOnly = !CAN_EDIT;
+  todaysSherlocksField.readOnly = !CAN_EDIT;
   readonlyBanner.hidden = !plannerStore.configured || CAN_EDIT;
 }
 

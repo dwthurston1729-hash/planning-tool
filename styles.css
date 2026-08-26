@@ -20,6 +20,20 @@
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
+
+.section-highlight {
+  display: table;
+  width: fit-content;
+  padding: 0.18rem 0.48rem;
+  border-radius: 5px;
+  color: #242420;
+}
+
+.section-highlight--blue   { background: #cfe4ff; }
+.section-highlight--red    { background: #ffd4d4; }
+.section-highlight--orange { background: #ffe0b8; }
+.section-highlight--purple { background: #e4d5ff; }
+.section-highlight--gold   { background: #f8df8b; }
 .quick-links {
   display: flex;
   flex-wrap: wrap;
@@ -343,6 +357,10 @@ body {
 
 .day-notes-col {
   min-width: 0;
+}
+
+.day-notes-col--full {
+  grid-column: 1 / -1;
 }
 
 @media (max-width: 640px) {
