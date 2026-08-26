@@ -1,5 +1,4 @@
-// Daily Planner — one table per WORKING day, with per-day + rolling completed
-// views and a weekly stats page.
+// Daily Planner — one table per working day.
 //
 // Sharing model ("commit to GitHub"):
 //   - The committed file  data/<YYYY-MM-DD>.json  is the SOURCE OF TRUTH.
@@ -8,20 +7,18 @@
 //
 // Day data shape:  { active: [ {task,notes} × 15 ], completed: [ {task,notes} ] }
 //   - active   = the 15-row grid (unfinished tasks, compacted to the top).
-//   - completed = tasks finished ON THAT DAY (shown struck through below).
+//   - completed = tasks finished on that day.
 //
 // Completing a task moves it from active -> completed; the active list slides up
-// so there are no gaps. Unchecking moves it back into the grid.
+// so there are no gaps.
 //
 // Weekdays only (Mon–Fri); windows counted in working days:
-//   - 10 working days back, 5 forward. Completed list keeps 7 working days.
+//   - 10 working days back, 5 forward.
 //   - Carry-over: a fresh day seeds with the last day's unfinished tasks.
 
 const ROWS = 15;
 const WORKDAYS_BACK = 10;
 const WORKDAYS_FWD = 5;
-const COMPLETED_WORKDAYS = 7;
-const STATS_KEY = "plan-stats"; // { "<YYYY-MM-DD>": completedCount } — persistent
 const AGENDA_KEY = "plan-agenda"; // [ {event,date} × 10 ] — standing TL agenda
 const AGENDA_ROWS = 10;
 
@@ -62,9 +59,6 @@ function keyOf(d) {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
-function dateFromKey(k) {
-  return new Date(k + "T00:00:00");
-}
 function draftKeyOf(d) {
   return `plan-draft:${keyOf(d)}`;
 }
@@ -73,8 +67,6 @@ const realToday = atMidnight(new Date());
 const today = isWeekend(realToday) ? nextWorkday(realToday) : realToday;
 const minDate = addWorkdays(today, -WORKDAYS_BACK);
 const maxDate = addWorkdays(today, WORKDAYS_FWD);
-const completedMin = keyOf(addWorkdays(today, -COMPLETED_WORKDAYS));
-
 let viewDate = today;
 let day = normalizeDay(null); // { active, completed } for the viewed day
 
@@ -103,17 +95,8 @@ const todaysSherlocksField = document.getElementById("todaysSherlocks");
 const top3Body = document.getElementById("top3Body");
 const top3ReviewBody = document.getElementById("top3ReviewBody");
 const agendaBody = document.getElementById("agendaBody");
-const completedTodayHead = document.getElementById("completedTodayHead");
-const completedTodayList = document.getElementById("completedTodayList");
-const completedList = document.getElementById("completedList");
 const authBox = document.getElementById("authBox");
 const readonlyBanner = document.getElementById("readonlyBanner");
-const slgAuditBody = document.getElementById("slgAuditBody");
-const slgAuditMeta = document.getElementById("slgAuditMeta");
-const tealAuditBody = document.getElementById("tealAuditBody");
-const tealAuditMeta = document.getElementById("tealAuditMeta");
-const claudeAuditBody = document.getElementById("claudeAuditBody");
-const claudeAuditMeta = document.getElementById("claudeAuditMeta");
 
 // Shared cloud store (defined in store.js). Fallback keeps the app working if
 // opened as a bare file:// with no Firebase scripts.
@@ -222,23 +205,10 @@ function normalizeDay(obj) {
   };
 }
 
-// --- Stats log (persistent, survives retention) ------------------------------
-function loadStats() {
-  return JSON.parse(localStorage.getItem(STATS_KEY) || "{}");
-}
-function setStat(dayKey, count) {
-  const s = loadStats();
-  if (count > 0) s[dayKey] = count;
-  else delete s[dayKey];
-  localStorage.setItem(STATS_KEY, JSON.stringify(s));
-}
-
 // --- Persistence -------------------------------------------------------------
 function saveDay() {
   localStorage.setItem(draftKeyOf(viewDate), JSON.stringify(day));
-  setStat(keyOf(viewDate), day.completed.length);
   plannerStore.writeDay(keyOf(viewDate), day);
-  plannerStore.writeStats(loadStats());
 }
 
 // --- Committed-file cache ----------------------------------------------------
@@ -470,124 +440,6 @@ function completeRow(i) {
   day.active.push(blankRow()); // keep 15 rows; remaining tasks slid up
   saveDay();
   render();
-  renderCompletedToday();
-  renderRolling();
-}
-
-// Move a completed item back into the active grid (first blank slot).
-function restoreToActive(dayObj, completedIndex) {
-  const item = dayObj.completed.splice(completedIndex, 1)[0];
-  if (!item) return;
-  const slot = dayObj.active.findIndex((r) => !nonBlank(r));
-  if (slot === -1) dayObj.active.pop(); // grid full — drop last blank/overflow
-  const at = slot === -1 ? dayObj.active.length : slot;
-  dayObj.active.splice(at, 0, cleanRow(item));
-  dayObj.active = padActive(dayObj.active);
-}
-
-// --- Completed TODAY (the viewed day) ---------------------------------------
-function renderCompletedToday() {
-  const isToday = keyOf(viewDate) === keyOf(today);
-  completedTodayHead.textContent = isToday
-    ? "Higher Priority Tasks Completed Today"
-    : `Higher Priority Tasks Completed · ${viewDate.toLocaleDateString(undefined, {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      })}`;
-
-  completedTodayList.innerHTML = "";
-
-  if (day.completed.length === 0) {
-    const li = document.createElement("li");
-    li.className = "completed-empty";
-    li.textContent = "Nothing completed on this day yet.";
-    completedTodayList.appendChild(li);
-    return;
-  }
-
-  day.completed.forEach((c, i) => {
-    const li = document.createElement("li");
-    li.className = "completed-item";
-
-    const box = document.createElement("input");
-    box.type = "checkbox";
-    box.checked = true;
-    box.className = "ci-box";
-    box.disabled = !CAN_EDIT;
-    box.setAttribute("aria-label", "Mark as not complete");
-    box.addEventListener("change", () => {
-      restoreToActive(day, i);
-      saveDay();
-      render();
-      renderCompletedToday();
-      renderRolling();
-    });
-
-    const main = document.createElement("span");
-    main.className = "ci-main";
-    main.textContent = c.task || "(no task text)";
-    if (c.notes && c.notes.trim()) {
-      const notes = document.createElement("span");
-      notes.className = "ci-notes";
-      notes.textContent = " — " + c.notes;
-      main.appendChild(notes);
-    }
-
-    li.appendChild(box);
-    li.appendChild(main);
-    completedTodayList.appendChild(li);
-  });
-}
-
-// --- Completed ROLLING (past 7 working days) --------------------------------
-async function renderRolling() {
-  const items = [];
-  let d = today;
-  while (keyOf(d) >= completedMin) {
-    const dayObj = keyOf(d) === keyOf(viewDate) ? day : await getDay(d);
-    dayObj.completed.forEach((c) => {
-      if (nonBlank(c)) items.push({ ...c, day: keyOf(d) });
-    });
-    d = prevWorkday(d);
-  }
-
-  completedList.innerHTML = "";
-
-  if (items.length === 0) {
-    const li = document.createElement("li");
-    li.className = "completed-empty";
-    li.textContent = "Nothing completed in the past work-week yet.";
-    completedList.appendChild(li);
-    return;
-  }
-
-  items.forEach((c) => {
-    const li = document.createElement("li");
-    li.className = "completed-item";
-
-    const main = document.createElement("span");
-    main.className = "ci-main";
-    main.textContent = c.task || "(no task text)";
-    if (c.notes && c.notes.trim()) {
-      const notes = document.createElement("span");
-      notes.className = "ci-notes";
-      notes.textContent = " — " + c.notes;
-      main.appendChild(notes);
-    }
-
-    const date = document.createElement("span");
-    date.className = "ci-date";
-    date.textContent = dateFromKey(c.day).toLocaleDateString(undefined, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-
-    li.appendChild(main);
-    li.appendChild(date);
-    completedList.appendChild(li);
-  });
 }
 
 // --- Planned Top 3 + their review (per-day, 3 free-text rows each) -----------
@@ -712,218 +564,6 @@ function reloadAgenda() {
   renderAgenda();
 }
 
-// --- Daily audits: TEAL time-tracking + Claude Code activity -----------------
-// Read-only tables fed by the `audit/<day>` Firestore docs (written locally by
-// the PlannerAudit generator). Owner-gated: viewers / not-signed-in get null
-// and see a friendly empty state. A per-load token guards against a slow fetch
-// for an old day landing after you've navigated away.
-let auditLoadToken = 0;
-
-function fmtMins(m) {
-  m = Math.max(0, Math.round(Number(m) || 0));
-  const h = Math.floor(m / 60);
-  const mm = m % 60;
-  return h ? `${h}h ${mm}m` : `${mm}m`;
-}
-
-function auditMessage(container, meta, text) {
-  meta.textContent = "";
-  container.innerHTML = "";
-  const p = document.createElement("p");
-  p.className = "audit-empty";
-  p.textContent = text;
-  container.appendChild(p);
-}
-
-function buildTable(headers, rows) {
-  const table = document.createElement("table");
-  table.className = "audit-table";
-  const thead = document.createElement("thead");
-  const htr = document.createElement("tr");
-  headers.forEach((h) => {
-    const th = document.createElement("th");
-    th.textContent = h.label;
-    if (h.cls) th.className = h.cls;
-    htr.appendChild(th);
-  });
-  thead.appendChild(htr);
-  table.appendChild(thead);
-  const tbody = document.createElement("tbody");
-  rows.forEach((cells) => {
-    const tr = document.createElement("tr");
-    cells.forEach((c, i) => {
-      const td = document.createElement("td");
-      if (c && typeof c === "object" && c.href) {
-        const a = document.createElement("a");
-        a.href = c.href;
-        a.target = "_blank";
-        a.rel = "noopener";
-        a.textContent = c.text == null || c.text === "" ? "—" : c.text;
-        td.appendChild(a);
-      } else {
-        td.textContent = c == null || c === "" ? "—" : c;
-      }
-      if (headers[i] && headers[i].cls) td.className = headers[i].cls;
-      tr.appendChild(td);
-    });
-    tbody.appendChild(tr);
-  });
-  table.appendChild(tbody);
-  return table;
-}
-
-// Deep link into Sherlock for a given SLG number (same format the SLG Tracker
-// uses). Owner-only view, so linking straight to the record is fine.
-const slgUrl = (id) =>
-  `https://sherlock.epic.com/default.aspx?view=slg/home#id=${encodeURIComponent(id)}`;
-
-// Sherlocks worked on this day. Prefer the generator-supplied `audit.slgs`
-// (enriched with real title/customer/time from the local SLG title cache);
-// fall back to the bare SLG numbers parsed out of that day's TEAL blocks so
-// the section still works before the enrichment lands.
-function renderSlgs(audit) {
-  const list = audit && Array.isArray(audit.slgs) ? audit.slgs.slice() : null;
-  if (!slgAuditBody || !slgAuditMeta) return;
-  if (list && list.length) {
-    list.sort((a, b) => (Number(b.minutes) || 0) - (Number(a.minutes) || 0));
-    const totalMin = list.reduce((s, x) => s + (Number(x.minutes) || 0), 0);
-    slgAuditMeta.textContent =
-      `${list.length} Sherlock${list.length === 1 ? "" : "s"}` +
-      (totalMin ? ` · ${fmtMins(totalMin)} tracked` : "");
-    const headers = [
-      { label: "SLG", cls: "col-slgnum" },
-      { label: "Title" },
-      { label: "Customer", cls: "col-cust" },
-      { label: "Time", cls: "col-dur" },
-    ];
-    const rows = list.map((s) => [
-      { href: s.url || slgUrl(s.id), text: s.id },
-      s.title || "",
-      s.customer || "",
-      s.minutes ? fmtMins(s.minutes) : "",
-    ]);
-    slgAuditBody.innerHTML = "";
-    slgAuditBody.appendChild(buildTable(headers, rows));
-    return;
-  }
-
-  // Fallback: distinct SLG numbers from this day's TEAL holds.
-  const items =
-    audit && audit.teal && Array.isArray(audit.teal.items) ? audit.teal.items : [];
-  const byId = new Map();
-  items.forEach((it) => {
-    const id = String((it && it.slg) || "").replace(/\D/g, "");
-    if (!id) return;
-    byId.set(id, (byId.get(id) || 0) + (Number(it.minutes) || 0));
-  });
-  if (!byId.size) {
-    auditMessage(slgAuditBody, slgAuditMeta, "No Sherlocks tracked on this day.");
-    return;
-  }
-  const derived = [...byId.entries()].sort((a, b) => b[1] - a[1]);
-  slgAuditMeta.textContent =
-    `${derived.length} Sherlock${derived.length === 1 ? "" : "s"}`;
-  const headers = [
-    { label: "SLG", cls: "col-slgnum" },
-    { label: "Title" },
-    { label: "Time", cls: "col-dur" },
-  ];
-  const rows = derived.map(([id, min]) => [
-    { href: slgUrl(id), text: id },
-    "",
-    min ? fmtMins(min) : "",
-  ]);
-  slgAuditBody.innerHTML = "";
-  slgAuditBody.appendChild(buildTable(headers, rows));
-}
-
-function renderTeal(audit) {
-  const teal = audit && audit.teal;
-  if (!tealAuditBody || !tealAuditMeta) return;
-  const items = (teal && Array.isArray(teal.items) ? teal.items : []).slice();
-  if (!items.length) {
-    auditMessage(tealAuditBody, tealAuditMeta, "No TEAL time tracked on this day.");
-    return;
-  }
-  items.sort((a, b) => String(a.start || "").localeCompare(String(b.start || "")));
-  const total = teal.totalMinutes != null
-    ? teal.totalMinutes
-    : items.reduce((s, it) => s + (Number(it.minutes) || 0), 0);
-  tealAuditMeta.textContent = `${items.length} block${items.length === 1 ? "" : "s"} · ${fmtMins(total)} tracked`;
-  tealAuditBody.innerHTML = "";
-  const headers = [
-    { label: "Time", cls: "col-when" },
-    { label: "Activity" },
-    { label: "Category", cls: "col-cat" },
-    { label: "Ref", cls: "col-ref" },
-    { label: "Duration", cls: "col-dur" },
-  ];
-  const rows = items.map((it) => {
-    const when = it.start && it.end ? `${it.start}–${it.end}` : it.start || "";
-    const ref = it.slg || it.dlg || it.prj || it.qan || it.customer || "";
-    return [when, it.subject || "", it.category || "", ref, fmtMins(it.minutes)];
-  });
-  tealAuditBody.appendChild(buildTable(headers, rows));
-}
-
-function renderClaude(audit) {
-  const cc = audit && audit.claude;
-  const sessions = (cc && Array.isArray(cc.sessions) ? cc.sessions : []).slice();
-  if (!sessions.length) {
-    auditMessage(claudeAuditBody, claudeAuditMeta, "No Claude Code activity on this day.");
-    return;
-  }
-  sessions.sort((a, b) => String(a.start || "").localeCompare(String(b.start || "")));
-  const total = cc.totalActiveMinutes != null
-    ? cc.totalActiveMinutes
-    : sessions.reduce((s, x) => s + (Number(x.activeMinutes) || 0), 0);
-  claudeAuditMeta.textContent = `${sessions.length} session${sessions.length === 1 ? "" : "s"} · ${fmtMins(total)} active`;
-  claudeAuditBody.innerHTML = "";
-  const headers = [
-    { label: "Time", cls: "col-when" },
-    { label: "What I worked on" },
-    { label: "Project", cls: "col-proj" },
-    { label: "Msgs", cls: "col-msgs" },
-    { label: "Active", cls: "col-dur" },
-  ];
-  const rows = sessions.map((s) => {
-    const when = s.start && s.end ? `${s.start}–${s.end}` : s.start || "";
-    return [when, s.title || "(untitled session)", s.project || "", s.messages != null ? String(s.messages) : "", fmtMins(s.activeMinutes)];
-  });
-  claudeAuditBody.appendChild(buildTable(headers, rows));
-}
-
-async function renderAudits() {
-  const token = ++auditLoadToken;
-  const key = keyOf(viewDate);
-
-  // Not signed in as owner: audit reads are denied by rules. Say so rather than
-  // implying there was no activity.
-  if (plannerStore.configured && !CAN_EDIT) {
-    const msg = "Sign in as the owner to view your audit for this day.";
-    auditMessage(slgAuditBody, slgAuditMeta, msg);
-    auditMessage(tealAuditBody, tealAuditMeta, msg);
-    auditMessage(claudeAuditBody, claudeAuditMeta, msg);
-    return;
-  }
-
-  auditMessage(slgAuditBody, slgAuditMeta, "Loading…");
-  auditMessage(tealAuditBody, tealAuditMeta, "Loading…");
-  auditMessage(claudeAuditBody, claudeAuditMeta, "Loading…");
-
-  let audit = null;
-  try {
-    audit = await plannerStore.getAudit(key);
-  } catch (_) {
-    audit = null;
-  }
-  if (token !== auditLoadToken) return; // navigated away; drop stale result
-
-  renderSlgs(audit);
-  renderTeal(audit);
-  renderClaude(audit);
-}
-
 // --- Clear the day's active tasks (NOT a completion) -------------------------
 clearBtn.addEventListener("click", () => {
   const anything = day.active.some(nonBlank);
@@ -996,9 +636,6 @@ async function loadDay(date) {
   todaysSherlocksField.value = day.todaysSherlocks || "";
   renderTop3();
   renderTop3Review();
-  renderCompletedToday();
-  renderRolling();
-  renderAudits();
 }
 
 // --- Header + navigation -----------------------------------------------------

@@ -1,7 +1,7 @@
 # Daily audits — TEAL + Claude Code
 
-The day view shows three auto-generated, read-only tables below the completed
-lists:
+The planner no longer renders daily audit tables. This document describes the
+legacy local collector and the owner-only data it still writes:
 
 - **Sherlocks · Worked On** — the distinct SLGs worked that day, taken from the
   SLG references on that day's TEAL holds and enriched with the record's title,
@@ -26,9 +26,9 @@ session titles routinely contain **customer-identifying** data (customer names,
 SLG/DLG/QAN numbers). So:
 
 - The audit data lives in a separate Firestore collection, `audit/<YYYY-MM-DD>`,
-  that is **owner-read-only** (see `firestore.rules`). Viewers / not-signed-in
-  users get nothing — the tables show an empty state. Nothing sensitive is ever
-  committed to this public repo.
+  that is **owner-read-only** (see `firestore.rules`). Viewers and
+  not-signed-in users get nothing. Nothing sensitive is ever committed to this
+  public repo.
 - A **local generator** (not in this repo — it lives at
   `%LOCALAPPDATA%\PlannerAudit` on David's machine, off OneDrive/git) reads the
   local TEAL calendar + Claude Code transcripts and writes the `audit/<date>`
@@ -37,7 +37,7 @@ SLG/DLG/QAN numbers). So:
 
 ```
 TEAL Outlook calendar ─┐
-                       ├─► Run-Audit.ps1 ─► audit/<date> (Firestore) ─► day view
+                       ├─► Run-Audit.ps1 ─► audit/<date> (Firestore)
 Claude Code .jsonl  ───┘   (daily task)      owner-read-only
 ```
 
@@ -57,34 +57,17 @@ Claude Code .jsonl  ───┘   (daily task)      owner-read-only
 
    Keep this file on your machine only — never commit it anywhere.
 
-That's it. The daily task fills in the data; sign in on the site to see it.
+That's it. The daily task continues filling the owner-only collection.
 
 ## How refresh works
 
 A Windows Scheduled Task named **PlannerAudit** runs
 `%LOCALAPPDATA%\PlannerAudit\Run-Audit.ps1` **daily at 5:30 PM and at logon**.
-Each run backfills the last 14 days (idempotent), so navigating back shows
-history and a day the machine was off self-heals on the next run.
+Each run backfills the last 14 days (idempotent), so missing audit history from
+a day the machine was off self-heals on the next run.
 
 - Run it now:  `powershell -File "%LOCALAPPDATA%\PlannerAudit\Run-Audit.ps1"`
 - Collect without uploading:  add `-NoUpload`
 - Custom window:  `-Start 2026-08-01 -End 2026-08-11`
 - Logs:  `%LOCALAPPDATA%\PlannerAudit\logs\`
 - Change the time / disable:  Task Scheduler → **PlannerAudit**
-
-## Inbox size on the Stats page
-
-The same daily generator also records the size of your main Outlook inbox once a
-day (~5 PM, when the 5:30 task runs) and writes the running series to
-`meta/inbox` — a single `{ counts: { "<date>": n } }` rollup. Unlike the audit
-tables this is **not** sensitive (just a number), so `meta/inbox` stays
-public-read like `meta/stats`, and the **Stats** page plots it as a line over
-time. Inbox size is point-in-time, so it's never backfilled: the chart fills in
-one day at a time going forward.
-
-## Seeing the tables
-
-Because the data is owner-gated, open the site and click **Sign in** with your
-owner Google account. Signed in → the tables populate for whichever day you're
-viewing. Not signed in (or a viewer) → the tables show a sign-in prompt and no
-data leaves Firestore.
