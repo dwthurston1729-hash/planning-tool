@@ -18,6 +18,7 @@
 //    meta/stats         ->  { counts: { "<YYYY-MM-DD>": completedCount } }
 //    meta/inbox         ->  { counts: { "<YYYY-MM-DD>": inboxSizeAt5pm } }
 //    meta/tlagenda      ->  { rows: [ {event, date} × 10 ] }  (standing list)
+//    meta/sherlocks     ->  { rows: [ {sherlock, notes, date} × 10 ] }  (standing)
 // ===========================================================================
 
 (function () {
@@ -26,6 +27,7 @@
   const FUTURE_KEY = "plan-future";
   const INBOX_KEY = "plan-inbox";
   const AGENDA_KEY = "plan-agenda";
+  const SHERLOCK_KEY = "plan-sherlocks";
 
   const configured =
     typeof FIREBASE_CONFIG === "object" &&
@@ -44,6 +46,7 @@
       writeFuture: () => {},
       writeStats: () => {},
       writeAgenda: () => {},
+      writeSherlocks: () => {},
       getAudit: async () => null,
       onAuthChange: () => {},
       signIn: () => {},
@@ -87,6 +90,10 @@
       const ag = await db.collection("meta").doc("tlagenda").get();
       if (ag.exists && Array.isArray(ag.data().rows)) {
         localStorage.setItem(AGENDA_KEY, JSON.stringify(ag.data().rows));
+      }
+      const sh = await db.collection("meta").doc("sherlocks").get();
+      if (sh.exists && Array.isArray(sh.data().rows)) {
+        localStorage.setItem(SHERLOCK_KEY, JSON.stringify(sh.data().rows));
       }
       const st = await db.collection("meta").doc("stats").get();
       if (st.exists && st.data().counts) {
@@ -142,6 +149,12 @@
     if (!canEdit()) return;
     debounce("agenda", () =>
       db.collection("meta").doc("tlagenda").set({ rows }).catch(console.error)
+    );
+  }
+  function writeSherlocks(rows) {
+    if (!canEdit()) return;
+    debounce("sherlocks", () =>
+      db.collection("meta").doc("sherlocks").set({ rows }).catch(console.error)
     );
   }
 
@@ -202,6 +215,14 @@
         }
       }, console.error)
     );
+    unsubFns.push(
+      db.collection("meta").doc("sherlocks").onSnapshot((doc) => {
+        if (doc.exists && Array.isArray(doc.data().rows)) {
+          localStorage.setItem(SHERLOCK_KEY, JSON.stringify(doc.data().rows));
+          onChange();
+        }
+      }, console.error)
+    );
   }
 
   window.plannerStore = {
@@ -214,6 +235,7 @@
     writeFuture,
     writeStats,
     writeAgenda,
+    writeSherlocks,
     getAudit,
     onAuthChange: (cb) => authCbs.push(cb),
     signIn: () =>

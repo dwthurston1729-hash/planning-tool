@@ -21,6 +21,8 @@ const WORKDAYS_BACK = 10;
 const WORKDAYS_FWD = 5;
 const AGENDA_KEY = "plan-agenda"; // [ {event,date} × 10 ] — standing TL agenda
 const AGENDA_ROWS = 10;
+const SHERLOCK_KEY = "plan-sherlocks"; // [ {sherlock,notes,date} × 10 ] — standing list
+const SHERLOCK_ROWS = 10;
 
 // --- Date helpers (local time) ----------------------------------------------
 function atMidnight(d) {
@@ -91,10 +93,10 @@ const dateEl = document.getElementById("dayDate");
 const clearBtn = document.getElementById("clearBtn");
 const dayNotesField = document.getElementById("dayNotes");
 const plannedDayField = document.getElementById("plannedDay");
-const todaysSherlocksField = document.getElementById("todaysSherlocks");
 const top3Body = document.getElementById("top3Body");
 const top3ReviewBody = document.getElementById("top3ReviewBody");
 const agendaBody = document.getElementById("agendaBody");
+const sherlockBody = document.getElementById("sherlockBody");
 const authBox = document.getElementById("authBox");
 const readonlyBanner = document.getElementById("readonlyBanner");
 
@@ -109,6 +111,7 @@ const plannerStore = window.plannerStore || {
   writeFuture: () => {},
   writeStats: () => {},
   writeAgenda: () => {},
+  writeSherlocks: () => {},
   getAudit: async () => null,
   onAuthChange: () => {},
   signIn: () => {},
@@ -151,8 +154,6 @@ function normalizeDay(obj) {
   const notes = (o) => (o && typeof o.dayNotes === "string" ? o.dayNotes : "");
   const planned = (o) =>
     o && typeof o.plannedDay === "string" ? o.plannedDay : "";
-  const sherlocks = (o) =>
-    o && typeof o.todaysSherlocks === "string" ? o.todaysSherlocks : "";
   // Always exactly 3 free-text slots (planned top 3 + their review answers).
   const triple = (o, key) => {
     const arr = o && !Array.isArray(o) && Array.isArray(o[key]) ? o[key] : [];
@@ -165,7 +166,6 @@ function normalizeDay(obj) {
       dayNotes: "",
       plannedDay: "",
       top3: ["", "", ""],
-      todaysSherlocks: "",
       top3Review: ["", "", ""],
     };
 
@@ -177,7 +177,6 @@ function normalizeDay(obj) {
       dayNotes: "",
       plannedDay: "",
       top3: ["", "", ""],
-      todaysSherlocks: "",
       top3Review: ["", "", ""],
     };
   }
@@ -189,7 +188,6 @@ function normalizeDay(obj) {
       dayNotes: notes(obj),
       plannedDay: planned(obj),
       top3: triple(obj, "top3"),
-      todaysSherlocks: sherlocks(obj),
       top3Review: triple(obj, "top3Review"),
     };
   }
@@ -200,7 +198,6 @@ function normalizeDay(obj) {
     dayNotes: notes(obj),
     plannedDay: planned(obj),
     top3: triple(obj, "top3"),
-    todaysSherlocks: sherlocks(obj),
     top3Review: triple(obj, "top3Review"),
   };
 }
@@ -564,6 +561,75 @@ function reloadAgenda() {
   renderAgenda();
 }
 
+// --- Sherlocks (standing list, sherlock/notes/date rows) ---------------------
+// Like the TL agenda this is NOT per-day: a single running list shown on every
+// day and stored in Firestore meta/sherlocks (owner-write, public-read).
+let sherlocks = padSherlocks([]);
+
+function padSherlocks(list) {
+  const out = (Array.isArray(list) ? list : [])
+    .slice(0, SHERLOCK_ROWS)
+    .map((r) => ({
+      sherlock: (r && r.sherlock) || "",
+      notes: (r && r.notes) || "",
+      date: (r && r.date) || "",
+    }));
+  while (out.length < SHERLOCK_ROWS)
+    out.push({ sherlock: "", notes: "", date: "" });
+  return out;
+}
+
+function loadSherlocks() {
+  return padSherlocks(JSON.parse(localStorage.getItem(SHERLOCK_KEY) || "null"));
+}
+
+function saveSherlocks() {
+  localStorage.setItem(SHERLOCK_KEY, JSON.stringify(sherlocks));
+  plannerStore.writeSherlocks(sherlocks);
+}
+
+function renderSherlocks() {
+  sherlockBody.innerHTML = "";
+  sherlocks.forEach((row, i) => {
+    const tr = document.createElement("tr");
+
+    const sherlockTd = document.createElement("td");
+    sherlockTd.appendChild(
+      makeTextCell(row.sherlock, "", (v) => {
+        sherlocks[i].sherlock = v;
+        saveSherlocks();
+      })
+    );
+
+    const notesTd = document.createElement("td");
+    notesTd.appendChild(
+      makeTextCell(row.notes, "", (v) => {
+        sherlocks[i].notes = v;
+        saveSherlocks();
+      })
+    );
+
+    const dateTd = document.createElement("td");
+    dateTd.appendChild(
+      makeTextCell(row.date, "", (v) => {
+        sherlocks[i].date = v;
+        saveSherlocks();
+      })
+    );
+
+    tr.appendChild(sherlockTd);
+    tr.appendChild(notesTd);
+    tr.appendChild(dateTd);
+    sherlockBody.appendChild(tr);
+  });
+  sherlockBody.querySelectorAll(".cell").forEach(autoGrow);
+}
+
+function reloadSherlocks() {
+  sherlocks = loadSherlocks();
+  renderSherlocks();
+}
+
 // --- Clear the day's active tasks (NOT a completion) -------------------------
 clearBtn.addEventListener("click", () => {
   const anything = day.active.some(nonBlank);
@@ -585,11 +651,6 @@ dayNotesField.addEventListener("input", () => {
 });
 plannedDayField.addEventListener("input", () => {
   day.plannedDay = plannedDayField.value;
-  saveDay();
-});
-
-todaysSherlocksField.addEventListener("input", () => {
-  day.todaysSherlocks = todaysSherlocksField.value;
   saveDay();
 });
 
@@ -633,7 +694,6 @@ async function loadDay(date) {
   plannedDayField.value = day.plannedDay || "";
 
   render();
-  todaysSherlocksField.value = day.todaysSherlocks || "";
   renderTop3();
   renderTop3Review();
 }
@@ -676,7 +736,6 @@ function applyEditMode() {
   clearBtn.style.display = CAN_EDIT ? "" : "none";
   dayNotesField.readOnly = !CAN_EDIT;
   plannedDayField.readOnly = !CAN_EDIT;
-  todaysSherlocksField.readOnly = !CAN_EDIT;
   readonlyBanner.hidden = !plannerStore.configured || CAN_EDIT;
 }
 
@@ -713,6 +772,7 @@ function updateAuthUI() {
 function refreshView() {
   loadDay(viewDate);
   reloadAgenda();
+  reloadSherlocks();
 }
 
 // --- Boot --------------------------------------------------------------------
@@ -727,6 +787,7 @@ async function boot() {
   purgeOldDrafts();
   loadDay(today);
   reloadAgenda();
+  reloadSherlocks();
   applyEditMode();
   updateAuthUI();
 

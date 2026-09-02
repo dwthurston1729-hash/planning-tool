@@ -359,10 +359,6 @@ body {
   min-width: 0;
 }
 
-.day-notes-col--full {
-  grid-column: 1 / -1;
-}
-
 @media (max-width: 640px) {
   .day-notes {
     grid-template-columns: 1fr;
@@ -523,6 +519,12 @@ body {
 .agenda-table td:first-child { border-left: none; }
 .agenda-table tbody tr:last-child td { border-bottom: none; }
 .agenda-table tr:nth-child(even) td { background: var(--row-alt); }
+
+/* --- Sherlocks (standing sherlock/notes/date list) --- */
+.sherlocks { margin-bottom: 1.75rem; }
+.sherlock-table .col-sherlock { width: 28%; }
+.sherlock-table .col-sherlock-notes { width: 52%; }
+.sherlock-table .col-sherlock-date { width: 20%; }
 
 /* --- Future tasks --- */
 .future {
