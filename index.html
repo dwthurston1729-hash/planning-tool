@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Planner</title>
-  <link rel="stylesheet" href="styles.css?v=27">
+  <link rel="stylesheet" href="styles.css?v=28">
 </head>
 <body data-palette="#3a6ea5">
   <main class="wrap">
@@ -91,12 +91,18 @@
 
     <section class="day-notes">
       <div class="day-notes-col">
-        <h2 class="day-notes-head section-highlight section-highlight--purple">Planned Day</h2>
+        <div class="day-notes-header">
+          <h2 class="day-notes-head section-highlight section-highlight--purple">Planned Day</h2>
+          <button id="emailPlannedDay" class="ghost-btn day-email-btn" type="button" aria-label="Email Planned Day to TL" title="Create an email to jmalish@epic.com">Email TL</button>
+        </div>
         <textarea id="plannedDay" class="day-notes-field"
           placeholder="Free-form plan for this day (not carried over)."></textarea>
       </div>
       <div class="day-notes-col">
-        <h2 class="day-notes-head section-highlight section-highlight--purple">Actual Day</h2>
+        <div class="day-notes-header">
+          <h2 class="day-notes-head section-highlight section-highlight--purple">Actual Day</h2>
+          <button id="emailActualDay" class="ghost-btn day-email-btn" type="button" aria-label="Email Actual Day to TL" title="Create an email to jmalish@epic.com">Email TL</button>
+        </div>
         <textarea id="dayNotes" class="day-notes-field"
           placeholder="Free-form notes for this day (not carried over)."></textarea>
       </div>
@@ -130,6 +136,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js?v=10"></script>
   <script src="store.js?v=13"></script>
-  <script src="script.js?v=26"></script>
+  <script src="script.js?v=27"></script>
 </body>
 </html>

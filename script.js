@@ -565,6 +565,19 @@ clearBtn.addEventListener("click", () => {
 });
 
 // --- Day notes (free text; per-day, never carried over) ----------------------
+function emailDaySection(label, field) {
+  const subject = `${label} - ${keyOf(viewDate)}`;
+  const body = field.value.replace(/\r?\n/g, "\r\n");
+  window.location.href = `mailto:jmalish@epic.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+document.getElementById("emailPlannedDay").addEventListener("click", () => {
+  emailDaySection("Planned Day", plannedDayField);
+});
+document.getElementById("emailActualDay").addEventListener("click", () => {
+  emailDaySection("Actual Day", dayNotesField);
+});
+
 dayNotesField.addEventListener("input", () => {
   day.dayNotes = dayNotesField.value;
   saveDay();
