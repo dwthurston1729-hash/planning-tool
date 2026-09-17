@@ -482,3 +482,10 @@ body {
 @media (max-width: 640px) {
   .customer-agendas-grid { grid-template-columns: 1fr; }
 }
+
+.split-agenda { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.split-agenda-half { padding: 0.7rem 0.9rem; }
+.split-agenda-half label { font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 0.4rem; }
+.split-agenda-half .day-notes-field { display: block; border: 1px solid transparent; border-radius: 4px; padding: 0.35rem; }
+.split-agenda-half .day-notes-field:focus { border-color: var(--accent); }
+.agenda-divider { border: 0; border-top: 1px solid var(--border); margin: 0; }
