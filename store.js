@@ -28,6 +28,7 @@
   const INBOX_KEY = "plan-inbox";
   const AGENDA_KEY = "plan-agenda";
   const SHERLOCK_KEY = "plan-sherlocks";
+  const CUSTOMER_AGENDAS_KEY = "plan-customer-agendas";
 
   const configured =
     typeof FIREBASE_CONFIG === "object" &&
@@ -47,6 +48,7 @@
       writeStats: () => {},
       writeAgenda: () => {},
       writeSherlocks: () => {},
+      writeCustomerAgendas: () => {},
       getAudit: async () => null,
       onAuthChange: () => {},
       signIn: () => {},
@@ -94,6 +96,10 @@
       const sh = await db.collection("meta").doc("sherlocks").get();
       if (sh.exists && Array.isArray(sh.data().rows)) {
         localStorage.setItem(SHERLOCK_KEY, JSON.stringify(sh.data().rows));
+      }
+      const ca = await db.collection("meta").doc("customerAgendas").get();
+      if (ca.exists && ca.data().notes) {
+        localStorage.setItem(CUSTOMER_AGENDAS_KEY, JSON.stringify(ca.data().notes));
       }
       const st = await db.collection("meta").doc("stats").get();
       if (st.exists && st.data().counts) {
@@ -158,6 +164,13 @@
     );
   }
 
+  function writeCustomerAgendas(notes) {
+    if (!canEdit()) return;
+    debounce("customerAgendas", () =>
+      db.collection("meta").doc("customerAgendas").set({ notes }).catch(console.error)
+    );
+  }
+
   // --- Daily audits (read-only; owner-gated by Firestore rules) ------------
   // The `audit/<YYYY-MM-DD>` docs hold TEAL + Claude Code activity written by
   // the local PlannerAudit generator. Firestore rules restrict READ to the
@@ -185,6 +198,15 @@
       return;
     }
     if (unsubFns.length) return; // already listening
+
+    unsubFns.push(
+      db.collection("meta").doc("customerAgendas").onSnapshot((doc) => {
+        if (doc.exists && doc.data().notes) {
+          localStorage.setItem(CUSTOMER_AGENDAS_KEY, JSON.stringify(doc.data().notes));
+          onChange();
+        }
+      }, console.error)
+    );
 
     unsubFns.push(
       db.collection("days").onSnapshot((snap) => {
@@ -236,6 +258,7 @@
     writeStats,
     writeAgenda,
     writeSherlocks,
+    writeCustomerAgendas,
     getAudit,
     onAuthChange: (cb) => authCbs.push(cb),
     signIn: () =>

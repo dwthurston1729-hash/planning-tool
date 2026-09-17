@@ -474,3 +474,11 @@ body {
   color: var(--muted);
   margin: 0 0 0.6rem;
 }
+
+/* Standing customer agendas */
+.customer-agendas { margin-top: 2.25rem; }
+.customer-agendas-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; margin-top: 1rem; }
+.customer-agendas-grid label { display: block; }
+@media (max-width: 640px) {
+  .customer-agendas-grid { grid-template-columns: 1fr; }
+}

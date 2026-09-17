@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Planner</title>
-  <link rel="stylesheet" href="styles.css?v=28">
+  <link rel="stylesheet" href="styles.css?v=29">
 </head>
 <body data-palette="#3a6ea5">
   <main class="wrap">
@@ -129,6 +129,33 @@
       <button id="clearBtn" class="ghost-btn" type="button">Clear</button>
     </div>
 
+    <section class="customer-agendas" aria-labelledby="customerAgendasTitle">
+      <h2 id="customerAgendasTitle" class="table-title section-highlight section-highlight--gold">Agendas</h2>
+      <p class="subtitle">Notes save automatically and carry over from day to day.</p>
+      <div class="customer-agendas-grid">
+        <div>
+          <label class="day-notes-head" for="agenda-coxhealth">CoxHealth</label>
+          <textarea id="agenda-coxhealth" class="day-notes-field" data-customer-agenda="coxhealth" rows="5" placeholder="Agenda notes for CoxHealth"></textarea>
+        </div>
+        <div>
+          <label class="day-notes-head" for="agenda-suny">SUNY</label>
+          <textarea id="agenda-suny" class="day-notes-field" data-customer-agenda="suny" rows="5" placeholder="Agenda notes for SUNY"></textarea>
+        </div>
+        <div>
+          <label class="day-notes-head" for="agenda-mary-washington">Mary Washington</label>
+          <textarea id="agenda-mary-washington" class="day-notes-field" data-customer-agenda="mary-washington" rows="5" placeholder="Agenda notes for Mary Washington"></textarea>
+        </div>
+        <div>
+          <label class="day-notes-head" for="agenda-kp-hawaii">KP Hawaii</label>
+          <textarea id="agenda-kp-hawaii" class="day-notes-field" data-customer-agenda="kp-hawaii" rows="5" placeholder="Agenda notes for KP Hawaii"></textarea>
+        </div>
+        <div>
+          <label class="day-notes-head" for="agenda-kp-northwest">KP Northwest</label>
+          <textarea id="agenda-kp-northwest" class="day-notes-field" data-customer-agenda="kp-northwest" rows="5" placeholder="Agenda notes for KP Northwest"></textarea>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- Firebase (shared saving). Loaded before the app; see SETUP.md. -->
@@ -136,7 +163,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js?v=10"></script>
-  <script src="store.js?v=13"></script>
-  <script src="script.js?v=27"></script>
+  <script src="store.js?v=14"></script>
+  <script src="script.js?v=28"></script>
 </body>
 </html>

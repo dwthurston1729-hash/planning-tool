@@ -21,6 +21,7 @@ const WORKDAYS_BACK = 10;
 const WORKDAYS_FWD = 5;
 const AGENDA_KEY = "plan-agenda"; // [ {event,date} × 10 ] — standing TL agenda
 const AGENDA_ROWS = 10;
+const CUSTOMER_AGENDAS_KEY = "plan-customer-agendas";
 const SHERLOCK_KEY = "plan-sherlocks"; // [ {sherlock,notes,date} × 10 ] — standing list
 const SHERLOCK_ROWS = 10;
 
@@ -110,6 +111,7 @@ const plannerStore = window.plannerStore || {
   writeStats: () => {},
   writeAgenda: () => {},
   writeSherlocks: () => {},
+  writeCustomerAgendas: () => {},
   getAudit: async () => null,
   onAuthChange: () => {},
   signIn: () => {},
@@ -550,6 +552,33 @@ function reloadSherlocks() {
   renderSherlocks();
 }
 
+// --- Customer agendas: one standing set of notes, independent of the date ---
+const customerAgendaFields = document.querySelectorAll("[data-customer-agenda]");
+let customerAgendas = {};
+
+function reloadCustomerAgendas() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CUSTOMER_AGENDAS_KEY) || "{}");
+    customerAgendas = saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+  } catch (_) {
+    customerAgendas = {};
+  }
+  customerAgendaFields.forEach((field) => {
+    const value = customerAgendas[field.dataset.customerAgenda];
+    field.value = typeof value === "string" ? value : "";
+    field.readOnly = !CAN_EDIT;
+  });
+}
+
+customerAgendaFields.forEach((field) => {
+  field.addEventListener("input", () => {
+    if (!CAN_EDIT) return;
+    customerAgendas[field.dataset.customerAgenda] = field.value;
+    localStorage.setItem(CUSTOMER_AGENDAS_KEY, JSON.stringify(customerAgendas));
+    plannerStore.writeCustomerAgendas({ ...customerAgendas });
+  });
+});
+
 // --- Clear the day's active tasks (NOT a completion) -------------------------
 clearBtn.addEventListener("click", () => {
   const anything = day.active.some(nonBlank);
@@ -704,6 +733,7 @@ function refreshView() {
   loadDay(viewDate);
   reloadAgenda();
   reloadSherlocks();
+  reloadCustomerAgendas();
 }
 
 // --- Boot --------------------------------------------------------------------
@@ -719,6 +749,7 @@ async function boot() {
   loadDay(today);
   reloadAgenda();
   reloadSherlocks();
+  reloadCustomerAgendas();
   applyEditMode();
   updateAuthUI();
 
