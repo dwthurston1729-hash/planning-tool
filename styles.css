@@ -53,7 +53,7 @@ body {
 }
 
 .wrap {
-  max-width: 760px;
+  width: calc(100% - 2.5rem);
   margin: 1.25rem auto;
   padding: 1.5rem 1.25rem 4rem;
   background: rgba(247, 247, 245, 0.92);
@@ -68,6 +68,7 @@ body {
   body { background-attachment: scroll; }
 
   .wrap {
+    width: 100%;
     margin: 0;
     border: 0;
     border-radius: 0;
@@ -477,11 +478,8 @@ body {
 
 /* Standing customer agendas */
 .customer-agendas { margin-top: 2.25rem; }
-.customer-agendas-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; margin-top: 1rem; }
+.customer-agendas-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; margin-top: 1rem; }
 .customer-agendas-grid label { display: block; }
-@media (max-width: 640px) {
-  .customer-agendas-grid { grid-template-columns: 1fr; }
-}
 
 .split-agenda { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 .split-agenda-half { padding: 0.7rem 0.9rem; }
