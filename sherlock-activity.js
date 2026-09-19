@@ -13,11 +13,6 @@
     status.textContent = 'Sign in as the planner owner to see your TS360 post activity.';
   }
 
-  function displayTime(value) {
-    const [hour, minute] = value.split(':');
-    return `${Number(hour) % 12 || 12}:${minute} ${Number(hour) >= 12 ? 'PM' : 'AM'}`;
-  }
-
   async function load(dayKey, store) {
     clear();
     const request = revision;
@@ -31,7 +26,7 @@
         status.textContent = `No TS360 activity has been imported for ${dayKey}. Only recent posts are available from TS360; missing history does not mean you made no posts.`;
         return;
       }
-      const rows = activity.slgs.filter(row => /^\d+$/.test(row.id) && /^\d{2}:\d{2}$/.test(row.lastPostTime));
+      const rows = activity.slgs.filter(row => /^\d+$/.test(row.id));
       for (const row of rows) {
         const tr = document.createElement('tr');
         const slg = document.createElement('td');
@@ -42,11 +37,8 @@
         link.textContent = `SLG ${row.id}`;
         slg.append(link, document.createElement('br'), document.createTextNode(row.title || ''));
         const detail = document.createElement('td');
-        const kinds = [row.hasPublished && 'Published', row.hasInternal && 'Internal / unpublished'].filter(Boolean).join(' and ');
-        detail.append(document.createTextNode(row.customer || ''), document.createElement('br'), document.createTextNode(kinds));
-        const time = document.createElement('td');
-        time.textContent = displayTime(row.lastPostTime);
-        tr.append(slg, detail, time);
+        detail.textContent = row.customer || '';
+        tr.append(slg, detail);
         body.append(tr);
       }
       const fetched = new Date(activity.fetchedAt);
