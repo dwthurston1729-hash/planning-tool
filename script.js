@@ -633,9 +633,30 @@ clearBtn.addEventListener("click", () => {
 });
 
 // --- Day notes (free text; per-day, never carried over) ----------------------
-function emailDaySection(label, field) {
-  const subject = `${label} - ${keyOf(viewDate)}`;
-  const body = field.value.replace(/\r?\n/g, "\r\n");
+async function emailDaySection(label, field, includeSherlocks = false) {
+  const dayKey = keyOf(viewDate);
+  const subject = `${label} - ${dayKey}`;
+  let text = field.value;
+  if (includeSherlocks) {
+    const button = document.getElementById("emailActualDay");
+    if (button.disabled) return;
+    button.disabled = true;
+    try {
+      const activity = await window.sherlockActivity.emailText(dayKey, plannerStore);
+      if (keyOf(viewDate) !== dayKey) {
+        alert("The selected day changed. Click Email TL again for the day you want to send.");
+        return;
+      }
+      text = [text.trimEnd(), activity].filter(Boolean).join("\n\n");
+    } catch (error) {
+      alert("Could not prepare the Actual Day email with Sherlock activity. " +
+        (plannerStore.canEdit() ? "Check your connection and try again." : "Sign in as the planner owner and try again."));
+      return;
+    } finally {
+      button.disabled = false;
+    }
+  }
+  const body = text.replace(/\r?\n/g, "\r\n");
   window.location.href = `mailto:jmalish@epic.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
@@ -643,7 +664,7 @@ document.getElementById("emailPlannedDay").addEventListener("click", () => {
   emailDaySection("Planned Day", plannedDayField);
 });
 document.getElementById("emailActualDay").addEventListener("click", () => {
-  emailDaySection("Actual Day", dayNotesField);
+  emailDaySection("Actual Day", dayNotesField, true);
 });
 
 dayNotesField.addEventListener("input", () => {
