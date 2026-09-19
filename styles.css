@@ -487,3 +487,16 @@ body {
 .split-agenda-half .day-notes-field { display: block; border: 1px solid transparent; border-radius: 4px; padding: 0.35rem; }
 .split-agenda-half .day-notes-field:focus { border-color: var(--accent); }
 .agenda-divider { border: 0; border-top: 1px solid var(--border); margin: 0; }
+
+.project-title {
+  display: block;
+  width: 100%;
+  padding: 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+}
+.project-title:focus { border-color: var(--accent); }

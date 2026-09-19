@@ -29,6 +29,7 @@
   const AGENDA_KEY = "plan-agenda";
   const SHERLOCK_KEY = "plan-sherlocks";
   const CUSTOMER_AGENDAS_KEY = "plan-customer-agendas";
+  const INTERNAL_PROJECTS_KEY = "plan-internal-projects";
 
   const configured =
     typeof FIREBASE_CONFIG === "object" &&
@@ -49,6 +50,7 @@
       writeAgenda: () => {},
       writeSherlocks: () => {},
       writeCustomerAgendas: () => {},
+      writeInternalProjects: () => {},
       getAudit: async () => null,
       onAuthChange: () => {},
       signIn: () => {},
@@ -100,6 +102,10 @@
       const ca = await db.collection("meta").doc("customerAgendas").get();
       if (ca.exists && ca.data().notes) {
         localStorage.setItem(CUSTOMER_AGENDAS_KEY, JSON.stringify(ca.data().notes));
+      }
+      const ip = await db.collection("meta").doc("internalProjects").get();
+      if (ip.exists && ip.data().notes) {
+        localStorage.setItem(INTERNAL_PROJECTS_KEY, JSON.stringify(ip.data().notes));
       }
       const st = await db.collection("meta").doc("stats").get();
       if (st.exists && st.data().counts) {
@@ -170,6 +176,12 @@
       db.collection("meta").doc("customerAgendas").set({ notes }).catch(console.error)
     );
   }
+  function writeInternalProjects(notes) {
+    if (!canEdit()) return;
+    debounce("internalProjects", () =>
+      db.collection("meta").doc("internalProjects").set({ notes }).catch(console.error)
+    );
+  }
 
   // --- Daily audits (read-only; owner-gated by Firestore rules) ------------
   // The `audit/<YYYY-MM-DD>` docs hold TEAL + Claude Code activity written by
@@ -203,6 +215,14 @@
       db.collection("meta").doc("customerAgendas").onSnapshot((doc) => {
         if (doc.exists && doc.data().notes) {
           localStorage.setItem(CUSTOMER_AGENDAS_KEY, JSON.stringify(doc.data().notes));
+          onChange();
+        }
+      }, console.error)
+    );
+    unsubFns.push(
+      db.collection("meta").doc("internalProjects").onSnapshot((doc) => {
+        if (doc.exists && doc.data().notes) {
+          localStorage.setItem(INTERNAL_PROJECTS_KEY, JSON.stringify(doc.data().notes));
           onChange();
         }
       }, console.error)
@@ -259,6 +279,7 @@
     writeAgenda,
     writeSherlocks,
     writeCustomerAgendas,
+    writeInternalProjects,
     getAudit,
     onAuthChange: (cb) => authCbs.push(cb),
     signIn: () =>

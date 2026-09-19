@@ -22,6 +22,7 @@ const WORKDAYS_FWD = 5;
 const AGENDA_KEY = "plan-agenda"; // [ {event,date} × 10 ] — standing TL agenda
 
 const CUSTOMER_AGENDAS_KEY = "plan-customer-agendas";
+const INTERNAL_PROJECTS_KEY = "plan-internal-projects";
 const SHERLOCK_KEY = "plan-sherlocks"; // [ {sherlock,notes,date} × 10 ] — standing list
 const SHERLOCK_ROWS = 10;
 
@@ -112,6 +113,7 @@ const plannerStore = window.plannerStore || {
   writeAgenda: () => {},
   writeSherlocks: () => {},
   writeCustomerAgendas: () => {},
+  writeInternalProjects: () => {},
   getAudit: async () => null,
   onAuthChange: () => {},
   signIn: () => {},
@@ -560,6 +562,33 @@ customerAgendaFields.forEach((field) => {
   });
 });
 
+// --- Internal projects: five standing title and notes pairs ---
+const internalProjectFields = document.querySelectorAll("[data-internal-project]");
+let internalProjects = {};
+
+function reloadInternalProjects() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(INTERNAL_PROJECTS_KEY) || "{}");
+    internalProjects = saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+  } catch (_) {
+    internalProjects = {};
+  }
+  internalProjectFields.forEach((field) => {
+    const value = internalProjects[field.dataset.internalProject];
+    field.value = typeof value === "string" ? value : "";
+    field.readOnly = !CAN_EDIT;
+  });
+}
+
+internalProjectFields.forEach((field) => {
+  field.addEventListener("input", () => {
+    if (!CAN_EDIT) return;
+    internalProjects[field.dataset.internalProject] = field.value;
+    localStorage.setItem(INTERNAL_PROJECTS_KEY, JSON.stringify(internalProjects));
+    plannerStore.writeInternalProjects({ ...internalProjects });
+  });
+});
+
 // --- Clear the day's active tasks (NOT a completion) -------------------------
 clearBtn.addEventListener("click", () => {
   const anything = day.active.some(nonBlank);
@@ -715,6 +744,7 @@ function refreshView() {
   reloadAgenda();
   reloadSherlocks();
   reloadCustomerAgendas();
+  reloadInternalProjects();
 }
 
 // --- Boot --------------------------------------------------------------------
@@ -731,6 +761,7 @@ async function boot() {
   reloadAgenda();
   reloadSherlocks();
   reloadCustomerAgendas();
+  reloadInternalProjects();
   applyEditMode();
   updateAuthUI();
 
