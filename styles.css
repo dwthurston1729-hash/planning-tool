@@ -458,6 +458,12 @@ body {
 
 /* --- Sherlocks (standing sherlock/notes/date list) --- */
 .sherlocks { margin-bottom: 1.75rem; }
+.sherlock-activity { margin-bottom: 1.5rem; }
+.activity-status { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+#sherlockActivityTable td { padding: 0.7rem 0.9rem; overflow-wrap: anywhere; line-height: 1.5; }
+#sherlockActivityTable th:first-child { width: 52%; }
+#sherlockActivityTable th:last-child { width: 16%; }
+#sherlockActivityTable a { color: var(--accent); }
 .sherlock-table .col-sherlock { width: 28%; }
 .sherlock-table .col-sherlock-notes { width: 52%; }
 .sherlock-table .col-sherlock-date { width: 20%; }

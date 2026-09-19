@@ -189,12 +189,9 @@
   // owner, so a denied read (viewer / not signed in) simply resolves to null
   // and the tables show an empty state — no sensitive data reaches viewers.
   async function getAudit(dayKey) {
-    try {
-      const doc = await db.collection("audit").doc(dayKey).get();
-      return doc.exists ? doc.data() : null;
-    } catch (e) {
-      return null; // permission-denied (not owner) or offline
-    }
+    if (!canEdit()) return null;
+    const doc = await db.collection("audit").doc(dayKey).get();
+    return doc.exists ? doc.data() : null;
   }
 
   // --- Live updates for viewers -------------------------------------------

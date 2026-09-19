@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Planner</title>
-  <link rel="stylesheet" href="styles.css?v=32">
+  <link rel="stylesheet" href="styles.css?v=33">
 </head>
 <body data-palette="#3a6ea5">
   <main class="wrap">
@@ -80,6 +80,15 @@
 
     <section class="sherlocks">
       <h2 class="table-title section-highlight section-highlight--red">Sherlocks</h2>
+      <div id="sherlockActivity" class="sherlock-activity" aria-live="polite">
+        <h3 class="day-notes-head">SLGs you posted on</h3>
+        <p id="sherlockActivityStatus" class="activity-status">Sign in to see your TS360 post activity.</p>
+        <table id="sherlockActivityTable" class="agenda-table" aria-label="SLGs you posted on" hidden>
+          <thead><tr><th>Sherlock</th><th>Customer &amp; activity</th><th>Latest post</th></tr></thead>
+          <tbody id="sherlockActivityBody"></tbody>
+        </table>
+      </div>
+      <h3 class="day-notes-head">Manual notes</h3>
       <table class="agenda-table sherlock-table" aria-label="Sherlocks">
         <thead>
           <tr>
@@ -235,7 +244,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js?v=10"></script>
-  <script src="store.js?v=16"></script>
-  <script src="script.js?v=30"></script>
+  <script src="store.js?v=17"></script>
+  <script src="sherlock-activity.js?v=1"></script>
+  <script src="script.js?v=31"></script>
 </body>
 </html>

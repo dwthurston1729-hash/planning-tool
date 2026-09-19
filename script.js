@@ -645,6 +645,7 @@ async function carryOverActive(refDate) {
 async function loadDay(date) {
   viewDate = atMidnight(date);
   updateHeader();
+  window.sherlockActivity?.load(keyOf(viewDate), plannerStore);
 
   const started = localStorage.getItem(draftKeyOf(viewDate)) !== null;
   day = await getDay(viewDate);
@@ -703,6 +704,7 @@ document.addEventListener("keydown", (e) => {
 // Apply CAN_EDIT to the static controls. The dynamic cells/checkboxes read
 // CAN_EDIT as they're built, so a re-render picks up the current mode.
 function applyEditMode() {
+  if (!CAN_EDIT) window.sherlockActivity?.clear();
   clearBtn.style.display = CAN_EDIT ? "" : "none";
   dayNotesField.readOnly = !CAN_EDIT;
   plannedDayField.readOnly = !CAN_EDIT;

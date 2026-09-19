@@ -1,7 +1,25 @@
 # Daily audits — TEAL + Claude Code
 
-The planner no longer renders daily audit tables. This document describes the
-legacy local collector and the owner-only data it still writes:
+The Sherlock section now displays **SLGs you posted on**, grouped by the selected
+planner day, using TS360 `recent_slg_posts` for the signed-in owner. Published
+and internal/unpublished posts are included; repeated activity produces one row
+per SLG. This is post activity, not a list of assigned SLGs or evidence of the
+date work originally started. Manual notes remain separate and unchanged.
+
+`audit/<date>.ts360` contains the imported metadata. It is owner-only, never
+written into the public `meta/sherlocks` list, and never committed to this repo.
+The view clears on sign-out and rejects stale responses after date navigation.
+
+The local `push_ts360.mjs` collector runs through the installed TS360 plugin
+wrapper from the existing PlannerAudit uploader.
+It merges activity by record ID, preserves earlier captured history, and patches
+only the `ts360` field. The legacy uploader patches its own fields to preserve
+TS360 history. Failed fetches do not clear previously imported activity.
+Recent-post query coverage is controlled by TS360; older days may have no
+imported history. Refresh requires the machine to run the task on the Epic network.
+
+The legacy local collector also writes the following owner-only data, which is
+not currently rendered:
 
 - **Sherlocks · Worked On** — the distinct SLGs worked that day, taken from the
   SLG references on that day's TEAL holds and enriched with the record's title,
