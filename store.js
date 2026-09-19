@@ -30,6 +30,7 @@
   const SHERLOCK_KEY = "plan-sherlocks";
   const CUSTOMER_AGENDAS_KEY = "plan-customer-agendas";
   const INTERNAL_PROJECTS_KEY = "plan-internal-projects";
+  const CUSTOMER_PROJECTS_KEY = "plan-customer-projects";
 
   const configured =
     typeof FIREBASE_CONFIG === "object" &&
@@ -51,6 +52,7 @@
       writeSherlocks: () => {},
       writeCustomerAgendas: () => {},
       writeInternalProjects: () => {},
+      writeCustomerProjects: () => {},
       getAudit: async () => null,
       onAuthChange: () => {},
       signIn: () => {},
@@ -106,6 +108,10 @@
       const ip = await db.collection("meta").doc("internalProjects").get();
       if (ip.exists && ip.data().notes) {
         localStorage.setItem(INTERNAL_PROJECTS_KEY, JSON.stringify(ip.data().notes));
+      }
+      const cp = await db.collection("meta").doc("customerProjects").get();
+      if (cp.exists && cp.data().notes) {
+        localStorage.setItem(CUSTOMER_PROJECTS_KEY, JSON.stringify(cp.data().notes));
       }
       const st = await db.collection("meta").doc("stats").get();
       if (st.exists && st.data().counts) {
@@ -182,6 +188,12 @@
       db.collection("meta").doc("internalProjects").set({ notes }).catch(console.error)
     );
   }
+  function writeCustomerProjects(notes) {
+    if (!canEdit()) return;
+    debounce("customerProjects", () =>
+      db.collection("meta").doc("customerProjects").set({ notes }).catch(console.error)
+    );
+  }
 
   // --- Daily audits (read-only; owner-gated by Firestore rules) ------------
   // The `audit/<YYYY-MM-DD>` docs hold TEAL + Claude Code activity written by
@@ -220,6 +232,14 @@
       db.collection("meta").doc("internalProjects").onSnapshot((doc) => {
         if (doc.exists && doc.data().notes) {
           localStorage.setItem(INTERNAL_PROJECTS_KEY, JSON.stringify(doc.data().notes));
+          onChange();
+        }
+      }, console.error)
+    );
+    unsubFns.push(
+      db.collection("meta").doc("customerProjects").onSnapshot((doc) => {
+        if (doc.exists && doc.data().notes) {
+          localStorage.setItem(CUSTOMER_PROJECTS_KEY, JSON.stringify(doc.data().notes));
           onChange();
         }
       }, console.error)
@@ -277,6 +297,7 @@
     writeSherlocks,
     writeCustomerAgendas,
     writeInternalProjects,
+    writeCustomerProjects,
     getAudit,
     onAuthChange: (cb) => authCbs.push(cb),
     signIn: () =>
