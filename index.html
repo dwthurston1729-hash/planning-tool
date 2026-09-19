@@ -65,15 +65,17 @@
 
     <section class="tl-agenda">
       <h2 class="table-title section-highlight section-highlight--gold">TL meeting agenda</h2>
-      <table class="agenda-table" aria-label="TL meeting agenda">
-        <thead>
-          <tr>
-            <th class="col-event">Meeting Topics (Successes, Failures, Questions)</th>
-            <th class="col-agenda-date">Date</th>
-          </tr>
-        </thead>
-        <tbody id="agendaBody"><!-- 10 rows injected by script.js --></tbody>
-      </table>
+      <div class="split-agenda">
+        <div class="split-agenda-half">
+          <label for="tl-successes">Recent successes</label>
+          <textarea id="tl-successes" class="day-notes-field" data-tl-agenda="successes" rows="5"></textarea>
+        </div>
+        <hr class="agenda-divider">
+        <div class="split-agenda-half">
+          <label for="tl-questions">Questions</label>
+          <textarea id="tl-questions" class="day-notes-field" data-tl-agenda="questions" rows="5"></textarea>
+        </div>
+      </div>
     </section>
 
     <section class="sherlocks">
@@ -182,7 +184,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js?v=10"></script>
-  <script src="store.js?v=14"></script>
-  <script src="script.js?v=28"></script>
+  <script src="store.js?v=15"></script>
+  <script src="script.js?v=29"></script>
 </body>
 </html>

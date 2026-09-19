@@ -20,7 +20,7 @@ const ROWS = 15;
 const WORKDAYS_BACK = 10;
 const WORKDAYS_FWD = 5;
 const AGENDA_KEY = "plan-agenda"; // [ {event,date} × 10 ] — standing TL agenda
-const AGENDA_ROWS = 10;
+
 const CUSTOMER_AGENDAS_KEY = "plan-customer-agendas";
 const SHERLOCK_KEY = "plan-sherlocks"; // [ {sherlock,notes,date} × 10 ] — standing list
 const SHERLOCK_ROWS = 10;
@@ -94,7 +94,7 @@ const dateEl = document.getElementById("dayDate");
 const clearBtn = document.getElementById("clearBtn");
 const dayNotesField = document.getElementById("dayNotes");
 const plannedDayField = document.getElementById("plannedDay");
-const agendaBody = document.getElementById("agendaBody");
+const agendaFields = document.querySelectorAll("[data-tl-agenda]");
 const sherlockBody = document.getElementById("sherlockBody");
 const authBox = document.getElementById("authBox");
 const readonlyBanner = document.getElementById("readonlyBanner");
@@ -426,62 +426,43 @@ function completeRow(i) {
   render();
 }
 
-// --- TL meeting agenda (standing list, 10 event/date rows) -------------------
-// Unlike the day sections this is NOT per-day: it's a single running list you
-// build up between meetings, shown identically on every day and stored in
-// Firestore meta/tlagenda (owner-write, public-read). Hydrated into localStorage
-// by store.js; viewers get live updates via the store subscription.
-let agenda = padAgenda([]);
+// --- TL meeting agenda: standing free-text notes --------------------------
+let agenda = normalizeAgenda(null);
 
-function padAgenda(list) {
-  const out = (Array.isArray(list) ? list : [])
-    .slice(0, AGENDA_ROWS)
-    .map((r) => ({ event: (r && r.event) || "", date: (r && r.date) || "" }));
-  while (out.length < AGENDA_ROWS) out.push({ event: "", date: "" });
-  return out;
-}
-
-function loadAgenda() {
-  return padAgenda(JSON.parse(localStorage.getItem(AGENDA_KEY) || "null"));
-}
-
-function saveAgenda() {
-  localStorage.setItem(AGENDA_KEY, JSON.stringify(agenda));
-  plannerStore.writeAgenda(agenda);
-}
-
-function renderAgenda() {
-  agendaBody.innerHTML = "";
-  agenda.forEach((row, i) => {
-    const tr = document.createElement("tr");
-
-    const eventTd = document.createElement("td");
-    eventTd.appendChild(
-      makeTextCell(row.event, "", (v) => {
-        agenda[i].event = v;
-        saveAgenda();
-      })
-    );
-
-    const dateTd = document.createElement("td");
-    dateTd.appendChild(
-      makeTextCell(row.date, "", (v) => {
-        agenda[i].date = v;
-        saveAgenda();
-      })
-    );
-
-    tr.appendChild(eventTd);
-    tr.appendChild(dateTd);
-    agendaBody.appendChild(tr);
-  });
-  agendaBody.querySelectorAll(".cell").forEach(autoGrow);
+function normalizeAgenda(saved) {
+  if (Array.isArray(saved)) {
+    return {
+      successes: "",
+      questions: saved.filter((row) => row && (row.event || row.date))
+        .map((row) => [row.event, row.date].filter(Boolean).join(" - ")).join("\n"),
+    };
+  }
+  return {
+    successes: typeof saved?.successes === "string" ? saved.successes : "",
+    questions: typeof saved?.questions === "string" ? saved.questions : "",
+  };
 }
 
 function reloadAgenda() {
-  agenda = loadAgenda();
-  renderAgenda();
+  try {
+    agenda = normalizeAgenda(JSON.parse(localStorage.getItem(AGENDA_KEY) || "null"));
+  } catch (_) {
+    agenda = normalizeAgenda(null);
+  }
+  agendaFields.forEach((field) => {
+    field.value = agenda[field.dataset.tlAgenda];
+    field.readOnly = !CAN_EDIT;
+  });
 }
+
+agendaFields.forEach((field) => {
+  field.addEventListener("input", () => {
+    if (!CAN_EDIT) return;
+    agenda[field.dataset.tlAgenda] = field.value;
+    localStorage.setItem(AGENDA_KEY, JSON.stringify(agenda));
+    plannerStore.writeAgenda({ ...agenda });
+  });
+});
 
 // --- Sherlocks (standing list, sherlock/notes/date rows) ---------------------
 // Like the TL agenda this is NOT per-day: a single running list shown on every

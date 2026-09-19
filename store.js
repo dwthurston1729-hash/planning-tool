@@ -90,8 +90,8 @@
         localStorage.setItem(FUTURE_KEY, JSON.stringify(fut.data().rows));
       }
       const ag = await db.collection("meta").doc("tlagenda").get();
-      if (ag.exists && Array.isArray(ag.data().rows)) {
-        localStorage.setItem(AGENDA_KEY, JSON.stringify(ag.data().rows));
+      if (ag.exists && (ag.data().notes || Array.isArray(ag.data().rows))) {
+        localStorage.setItem(AGENDA_KEY, JSON.stringify(ag.data().notes || ag.data().rows));
       }
       const sh = await db.collection("meta").doc("sherlocks").get();
       if (sh.exists && Array.isArray(sh.data().rows)) {
@@ -151,10 +151,10 @@
       db.collection("meta").doc("stats").set({ counts }).catch(console.error)
     );
   }
-  function writeAgenda(rows) {
+  function writeAgenda(notes) {
     if (!canEdit()) return;
     debounce("agenda", () =>
-      db.collection("meta").doc("tlagenda").set({ rows }).catch(console.error)
+      db.collection("meta").doc("tlagenda").set({ notes }, { merge: true }).catch(console.error)
     );
   }
   function writeSherlocks(rows) {
@@ -231,8 +231,8 @@
     );
     unsubFns.push(
       db.collection("meta").doc("tlagenda").onSnapshot((doc) => {
-        if (doc.exists && Array.isArray(doc.data().rows)) {
-          localStorage.setItem(AGENDA_KEY, JSON.stringify(doc.data().rows));
+        if (doc.exists && (doc.data().notes || Array.isArray(doc.data().rows))) {
+          localStorage.setItem(AGENDA_KEY, JSON.stringify(doc.data().notes || doc.data().rows));
           onChange();
         }
       }, console.error)
