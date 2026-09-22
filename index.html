@@ -88,17 +88,6 @@
           <tbody id="sherlockActivityBody"></tbody>
         </table>
       </div>
-      <h3 class="day-notes-head">Manual notes</h3>
-      <table class="agenda-table sherlock-table" aria-label="Sherlocks">
-        <thead>
-          <tr>
-            <th class="col-sherlock">Sherlock</th>
-            <th class="col-sherlock-notes">Notes</th>
-            <th class="col-sherlock-date">Date started</th>
-          </tr>
-        </thead>
-        <tbody id="sherlockBody"><!-- rows injected by script.js --></tbody>
-      </table>
     </section>
 
     <section class="day-notes">
@@ -119,26 +108,6 @@
           placeholder="Free-form notes for this day (not carried over)."></textarea>
       </div>
     </section>
-
-    <h2 class="table-title">Ongoing Projects</h2>
-    <table class="plan-table" aria-label="Ongoing Projects">
-      <thead>
-        <tr>
-          <th class="col-grip" aria-label="Reorder"></th>
-          <th class="col-task">Task</th>
-          <th class="col-notes">Notes</th>
-          <th class="col-deadline">Deadline</th>
-          <th class="col-done">Complete?</th>
-        </tr>
-      </thead>
-      <tbody id="planBody">
-        <!-- 15 active rows injected by script.js -->
-      </tbody>
-    </table>
-
-    <div class="table-actions">
-      <button id="clearBtn" class="ghost-btn" type="button">Clear</button>
-    </div>
 
     <section class="customer-agendas" aria-labelledby="customerAgendasTitle">
       <h2 id="customerAgendasTitle" class="table-title section-highlight section-highlight--gold">Agendas</h2>
@@ -297,6 +266,6 @@
   <script src="firebase-config.js?v=10"></script>
   <script src="store.js?v=18"></script>
   <script src="sherlock-activity.js?v=3"></script>
-  <script src="script.js?v=33"></script>
+  <script src="script.js?v=34"></script>
 </body>
 </html>

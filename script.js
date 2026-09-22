@@ -235,6 +235,7 @@ function ensureId(i) {
 let dragIndex = null;
 
 function render() {
+  if (!body) return;
   body.innerHTML = "";
 
   day.active.forEach((row, i) => {
@@ -496,6 +497,7 @@ function saveSherlocks() {
 }
 
 function renderSherlocks() {
+  if (!sherlockBody) return;
   sherlockBody.innerHTML = "";
   sherlocks.forEach((row, i) => {
     const tr = document.createElement("tr");
@@ -619,7 +621,7 @@ customerProjectFields.forEach((field) => {
 });
 
 // --- Clear the day's active tasks (NOT a completion) -------------------------
-clearBtn.addEventListener("click", () => {
+clearBtn?.addEventListener("click", () => {
   const anything = day.active.some(nonBlank);
   if (!anything) return;
   const ok = confirm(
@@ -755,7 +757,7 @@ document.addEventListener("keydown", (e) => {
 // CAN_EDIT as they're built, so a re-render picks up the current mode.
 function applyEditMode() {
   if (!CAN_EDIT) window.sherlockActivity?.clear();
-  clearBtn.style.display = CAN_EDIT ? "" : "none";
+  if (clearBtn) clearBtn.style.display = CAN_EDIT ? "" : "none";
   dayNotesField.readOnly = !CAN_EDIT;
   plannedDayField.readOnly = !CAN_EDIT;
   readonlyBanner.hidden = !plannerStore.configured || CAN_EDIT;
