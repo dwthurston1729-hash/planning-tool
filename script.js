@@ -94,8 +94,6 @@ const nextBtn = document.getElementById("nextDay");
 const titleEl = document.getElementById("dayTitle");
 const dateEl = document.getElementById("dayDate");
 const clearBtn = document.getElementById("clearBtn");
-const dayNotesField = document.getElementById("dayNotes");
-const plannedDayField = document.getElementById("plannedDay");
 const agendaFields = document.querySelectorAll("[data-tl-agenda]");
 const sherlockBody = document.getElementById("sherlockBody");
 const authBox = document.getElementById("authBox");
@@ -634,50 +632,6 @@ clearBtn?.addEventListener("click", () => {
   render();
 });
 
-// --- Day notes (free text; per-day, never carried over) ----------------------
-async function emailDaySection(label, field, includeSherlocks = false) {
-  const dayKey = keyOf(viewDate);
-  const subject = `${label} - ${dayKey}`;
-  let text = field.value;
-  if (includeSherlocks) {
-    const button = document.getElementById("emailActualDay");
-    if (button.disabled) return;
-    button.disabled = true;
-    try {
-      const activity = await window.sherlockActivity.emailText(dayKey, plannerStore);
-      if (keyOf(viewDate) !== dayKey) {
-        alert("The selected day changed. Click Email TL again for the day you want to send.");
-        return;
-      }
-      text = [text.trimEnd(), activity].filter(Boolean).join("\n\n");
-    } catch (error) {
-      alert("Could not prepare the Actual Day email with Sherlock activity. " +
-        (plannerStore.canEdit() ? "Check your connection and try again." : "Sign in as the planner owner and try again."));
-      return;
-    } finally {
-      button.disabled = false;
-    }
-  }
-  const body = text.replace(/\r?\n/g, "\r\n");
-  window.location.href = `mailto:jmalish@epic.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-}
-
-document.getElementById("emailPlannedDay").addEventListener("click", () => {
-  emailDaySection("Planned Day", plannedDayField);
-});
-document.getElementById("emailActualDay").addEventListener("click", () => {
-  emailDaySection("Actual Day", dayNotesField, true);
-});
-
-dayNotesField.addEventListener("input", () => {
-  day.dayNotes = dayNotesField.value;
-  saveDay();
-});
-plannedDayField.addEventListener("input", () => {
-  day.plannedDay = plannedDayField.value;
-  saveDay();
-});
-
 // --- Carry-over --------------------------------------------------------------
 // Walk back from `refDate` (exclusive) to the first day that has unfinished
 // tasks, and return them. Used to seed today and any un-started future day.
@@ -715,8 +669,6 @@ async function loadDay(date) {
     }
   }
 
-  dayNotesField.value = day.dayNotes || "";
-  plannedDayField.value = day.plannedDay || "";
 
   render();
 }
@@ -758,8 +710,6 @@ document.addEventListener("keydown", (e) => {
 function applyEditMode() {
   if (!CAN_EDIT) window.sherlockActivity?.clear();
   if (clearBtn) clearBtn.style.display = CAN_EDIT ? "" : "none";
-  dayNotesField.readOnly = !CAN_EDIT;
-  plannedDayField.readOnly = !CAN_EDIT;
   readonlyBanner.hidden = !plannerStore.configured || CAN_EDIT;
 }
 
